@@ -1,0 +1,12 @@
+# docker build のときに Docker に送らないもの。
+# frontend/Dockerfile は package.json と package-lock.json しかコピーしないので、
+# ほかのファイルを送っても使われず、ビルドが遅くなるだけ。
+
+# ホストの macOS 用のライブラリ（数百MB）。コンテナの中では npm ci で入れ直す
+node_modules
+
+# ビルドの結果・キャッシュ
+.next
+
+# 秘密の値が入るファイル。イメージに焼き込まない
+.env*

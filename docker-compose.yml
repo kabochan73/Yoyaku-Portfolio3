@@ -1,0 +1,133 @@
+# ローカル開発用の docker compose。
+# `docker compose up -d --build` で、開発に必要なサービスがすべて立ち上がる。
+# 本番（Railway）では使わない。本番の構成は docs/07-dev-and-deploy.md を参照。
+#
+# 値の置き場所のルール:
+#   - 秘密の値（APP_KEY など）は backend/.env に置き、このファイルには書かない
+#   - ローカル専用で秘密でない値（DB のユーザー名・パスワードなど）は、ここに書いてよい
+
+# ---------------------------------------------------------------------------
+# backend 系サービスの共通設定（YAML のアンカー）
+# ---------------------------------------------------------------------------
+# backend（php-fpm）・queue-worker・scheduler は、同じイメージ・同じコードで
+# 起動コマンドだけが違う。R1 は3回コピーしていたので、ここに1回だけ書いて
+# 各サービスで `<<: *backend` として取り込む。
+x-backend: &backend
+  build:
+    context: ./backend
+  # ホストの backend/ をそのままコンテナに見せる（コードを書き換えるとすぐ反映される）。
+  # vendor/ もホスト側のものを使うので、composer install はホストかコンテナのどちらかで1回やればよい。
+  volumes:
+    - ./backend:/var/www/html
+  depends_on:
+    # PostgreSQL は「起動した」だけでなく「接続を受け付けられる」まで待つ（healthcheck を参照）。
+    # これが無いと、backend が先に起きてマイグレーションなどが接続エラーになることがある。
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_started
+
+services:
+  # -------------------------------------------------------------------------
+  # Laravel 本体（php-fpm）。HTTP は直接受けず、nginx から FastCGI で受け取る
+  # -------------------------------------------------------------------------
+  backend:
+    <<: *backend
+
+  # キューの処理（メール送信、フロントの再検証の呼び出し）。
+  # キューは PostgreSQL の jobs テーブルに積む（docs/04 の「Redis の用途」）。
+  # --tries=3: 失敗したジョブを3回まで試す
+  queue-worker:
+    <<: *backend
+    command: php artisan queue:work database --tries=3
+
+  # 定期実行（古い予約の削除 model:prune など）。
+  # schedule:work は1分ごとにスケジュールを確認し続ける、開発・コンテナ向けのコマンド。
+  scheduler:
+    <<: *backend
+    command: php artisan schedule:work
+
+  # -------------------------------------------------------------------------
+  # nginx: HTTP を受けて、PHP のリクエストだけ backend（php-fpm）に渡す
+  # -------------------------------------------------------------------------
+  # ブラウザからは Next.js（3000番）経由で API を呼ぶ（docs/05 の rewrites）。
+  # 8000番は、curl などで API を直接叩いて確認するための入口として開けておく。
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - "8000:80"
+    volumes:
+      # 画像などの静的ファイルを nginx が直接返せるよう、backend のコードを読み取り専用で見せる
+      - ./backend:/var/www/html:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+
+  # -------------------------------------------------------------------------
+  # Next.js（開発サーバー）
+  # -------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      # node_modules と .next はコンテナ内のものを使う（ホストの macOS 用と中身が違うため）。
+      # 「名前の無いボリューム」で上書きして、ホスト側のフォルダで隠れないようにする。
+      - /app/node_modules
+      - /app/.next
+    environment:
+      # Next.js サーバーから見た API の場所（Docker 内のネットワーク名で指定）。
+      # 1-5 で rewrites（ブラウザの /api を backend へ中継）に使う。
+      API_URL: http://nginx/api
+    depends_on:
+      - nginx
+
+  # -------------------------------------------------------------------------
+  # PostgreSQL
+  # -------------------------------------------------------------------------
+  postgres:
+    # R1 と同じ 15 系。排他制約（EXCLUDE USING gist）と btree_gist 拡張を使う（docs/02）
+    image: postgres:15-alpine
+    environment:
+      # 初回起動時に、このユーザーとデータベース（開発用）が作られる
+      POSTGRES_DB: futsal_db
+      POSTGRES_USER: futsal
+      POSTGRES_PASSWORD: futsal
+    ports:
+      # ホストから TablePlus などで中を見られるように開けておく
+      - "5432:5432"
+    volumes:
+      # データを消さずに残すための保存場所（docker compose down しても残る。消すなら down -v）
+      - postgres_data:/var/lib/postgresql/data
+      # 初回起動時（データが空のとき）だけ実行される SQL。テスト用 DB を作る
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      # 接続を受け付けられる状態かを確かめる。backend 系はこれが通るまで起動を待つ
+      test: ["CMD-SHELL", "pg_isready -U futsal -d futsal_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # -------------------------------------------------------------------------
+  # Redis: カレンダーの「日ごとの事実」のキャッシュ（1分）とレート制限に使う
+  # キュー・セッションには使わない（PostgreSQL）。docs/04 の「Redis の用途」
+  # -------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # -------------------------------------------------------------------------
+  # Mailpit: 送ったメールを受け取って、ブラウザ（http://localhost:8025）で見せる
+  # 本番は Resend で実際に送る
+  # -------------------------------------------------------------------------
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025" # 画面
+      - "1025:1025" # SMTP（Laravel はここにメールを送る）
+
+volumes:
+  postgres_data:

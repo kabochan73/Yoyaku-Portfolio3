@@ -18,15 +18,37 @@
         </include>
     </source>
     <php>
+        <!--
+            テスト実行時の環境変数。backend/.env より優先される。
+            方針は docs/06-testing.md の「実行環境」。
+        -->
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <!-- パスワードのハッシュ計算を軽くして、テストを速くする（本番は 12） -->
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
-        <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
+
+        <!--
+            DB は PostgreSQL のテスト用 DB（docker/postgres/init.sql で作成）。
+            R1 は SQLite のメモリ上で動かしていたため、排他制約（二重予約の防止）や
+            部分ユニークインデックスを確かめられなかった（D12）。
+            接続先（DB_HOST など）は backend/.env の値を使う。
+        -->
+        <env name="DB_CONNECTION" value="pgsql"/>
+        <env name="DB_DATABASE" value="futsal_test"/>
         <env name="DB_URL" value=""/>
+
+        <!--
+            キャッシュは本番と同じ Redis を使う（保存・期限切れの動きを本番どおりに確かめるため）。
+            開発用のキャッシュ（1番）と混ざらないよう、テストは 15番の DB を使う。
+            各テストの前に tests/Pest.php で空にする。
+        -->
+        <env name="CACHE_STORE" value="redis"/>
+        <env name="REDIS_CACHE_DB" value="15"/>
+
+        <!-- メールは実際には送らず、送った内容をテストで確かめる -->
         <env name="MAIL_MAILER" value="array"/>
+        <!-- キューに積んだジョブは、その場ですぐ実行する -->
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>

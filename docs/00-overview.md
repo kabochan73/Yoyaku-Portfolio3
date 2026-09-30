@@ -110,7 +110,7 @@ R1 と同じ。ただし WebSocket（Reverb）はやめ、Redis の用途を変�
 
 | 層 | 技術 |
 |---|---|
-| フロントエンド | Next.js 16（App Router）/ React 19 / TypeScript / Tailwind CSS v4 / TanStack Query v5 / React Hook Form + Zod |
+| フロントエンド | Next.js 16（App Router）/ React 19 / TypeScript / Tailwind CSS v4 / TanStack Query v5 / React Hook Form + Zod。**Node.js 24**（2026-09-30 決定。Jest が ESM 専用のパッケージを直接読めるのが 24.9 以上のため） |
 | バックエンド | Laravel 13 / PHP 8.4 / Sanctum（SPA Cookie 認証） |
 | 画面の更新 | TanStack Query の定期取得（60秒）。**R1 の Laravel Reverb + Echo（WebSocket）は使わない**（2026-09-29 決定） |
 | DB | PostgreSQL 15 |

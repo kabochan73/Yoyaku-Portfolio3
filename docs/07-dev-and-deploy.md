@@ -15,6 +15,8 @@ Yoyaku-Portfolio2/
 
 ## ローカル環境（docker compose）
 
+手元で Node.js を直接使うとき（`npm run lint` など）は、リポジトリのルートで `nvm use` を実行して Node 24 に切り替える（`.nvmrc`）。
+
 R1 と同じ構成。
 
 | サービス | ポート | 役割 |
@@ -66,7 +68,7 @@ docker compose exec backend php artisan migrate --seed
 | ジョブ | ステップ |
 |---|---|
 | backend | `composer install` → **Pint（`--test`）** → **Larastan** → Pest（**PostgreSQL・Redis サービスコンテナ**。マイグレーションも実 DB で流れることを兼ねて確認する） |
-| frontend | `npm ci` → ESLint → **Prettier（`--check`）** → `tsc --noEmit` → Jest → **スタブサーバー起動** → `next build`（`BUILD_API_URL` = スタブ）→ **`/` が静的になっているか確認** |
+| frontend | **Node.js 24** → `npm ci` → ESLint → **Prettier（`--check`）** → `tsc --noEmit` → Jest → **スタブサーバー起動** → `next build`（`BUILD_API_URL` = スタブ）→ **`/` が静的になっているか確認** |
 
 ### ビルド用のスタブサーバー
 

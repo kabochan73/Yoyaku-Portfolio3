@@ -1,7 +1,9 @@
 # ローカル開発用の frontend イメージ（next dev）。
 # 本番用（Railway）は手順9で Dockerfile.prod として別に作る。
 
-FROM node:22-alpine
+# Node.js 24（2026-09-30 決定）。Jest が ESM 専用のパッケージ（MSW など）を
+# そのまま読み込めるのは Node 24.9 以上のため。手元は .nvmrc、CI も 24 にそろえる。
+FROM node:24-alpine
 
 WORKDIR /app
 

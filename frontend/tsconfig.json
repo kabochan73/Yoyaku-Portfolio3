@@ -5,6 +5,9 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
+    // 配列やオブジェクトから取り出した値を「無いかもしれない（undefined）」として扱う（docs/05 の規約）。
+    // 例: slots[hour] が string ではなく string | undefined になり、「その枠が無い」場合の書き漏れを型で見つけられる
+    "noUncheckedIndexedAccess": true,
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",

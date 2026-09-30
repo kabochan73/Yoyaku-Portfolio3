@@ -1,0 +1,13 @@
+# Prettier で整形しないもの
+
+# ライブラリ・ビルドの結果（自分で書いたコードではない）
+node_modules
+.next
+out
+
+# npm が自動で書き出すファイル
+package-lock.json
+
+# next dev が自動で書き直すファイル（AGENTS.md の注意書きを参照）
+AGENTS.md
+CLAUDE.md

@@ -41,7 +41,10 @@ const nextConfig: NextConfig = {
       // 例: /api/calendar?from=... → http://nginx/api/calendar?from=...
       { source: "/api/:path*", destination: `${apiUrl}/:path*` },
       // ログイン前に CSRF Cookie を受け取る Sanctum のエンドポイント（手順4で使う）
-      { source: "/sanctum/:path*", destination: `${backendOrigin}/sanctum/:path*` },
+      {
+        source: "/sanctum/:path*",
+        destination: `${backendOrigin}/sanctum/:path*`,
+      },
     ];
   },
 };

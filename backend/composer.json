@@ -12,6 +12,7 @@
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "larastan/larastan": "^3.12",
         "laravel/boost": "^2.10",
         "laravel/pail": "^1.2.5",
         "laravel/pao": "^1.0.6",
@@ -51,6 +52,15 @@
             "@php artisan config:clear --ansi @no_additional_args",
             "@php artisan test"
         ],
+        "lint": [
+            "pint --test"
+        ],
+        "format": [
+            "pint"
+        ],
+        "analyse": [
+            "phpstan analyse --memory-limit=1G"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
@@ -69,6 +79,11 @@
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
         ]
+    },
+    "scripts-descriptions": {
+        "lint": "Pint で書き方をチェックする（変更はしない。CI で使う）",
+        "format": "Pint で書き方を整える（ファイルを書き換える）",
+        "analyse": "Larastan（PHPStan）で型の誤りなどを静的に解析する"
     },
     "extra": {
         "laravel": {

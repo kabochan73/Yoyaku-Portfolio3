@@ -1,0 +1,20 @@
+# Larastan（PHPStan の Laravel 版）の設定。
+# コードを実行せずに読み、型の誤り・存在しないメソッドの呼び出し・null の扱い漏れなどを見つける。
+# 実行: composer analyse（CI でも同じコマンドを流す。docs/07 の CI）
+
+includes:
+    # Laravel 特有の書き方（Facade、Eloquent のマジックメソッド、config() の戻り値など）を
+    # PHPStan が理解できるようにする拡張
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    # 厳しさ（0〜10）。設計どおり 6 から始め、完成時に 8 を目指す（docs/04 のコーディング規約）。
+    # 6 では、メソッドの引数・戻り値の型が書かれていないことも指摘される。
+    level: 6
+
+    # 解析する場所 = 自分で書くコードの置き場所。
+    # vendor/（ライブラリ）や tests/ は対象外
+    paths:
+        - app/
+        - database/
+        - routes/

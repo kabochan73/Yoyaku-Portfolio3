@@ -183,7 +183,7 @@ Route::get('/calendar', ...)->middleware('cache.headers:private;no_cache;etag');
 - `private`: 途中のキャッシュ（CDN など）には保存させない。`/admin/calendar` は予約者名を含むため
 - ブラウザが 304 を受けると、保存してある前回の本文を使う。axios・TanStack Query からは普通の 200 に見えるので、フロントのコードは変えない
 - **減るのは通信量だけ**。DB の問い合わせと JSON の組み立ては毎回行う（ETag は組み立てた中身から作るため）
-- **要検証（実装初日）**: Next.js の rewrites が `If-None-Match` と `304` をそのまま中継するか（[07](07-dev-and-deploy.md#実装の順番)）
+- **確認済み（2026-09-30）**: Next.js の rewrites は `If-None-Match` と `304` をそのまま中継する（`next dev`・`next start` とも。中身が同じなら本文なしの 304、変わっていれば 200）
 
 ### GET `/admin/calendar?from=2026-10-05&to=2026-10-11`
 
@@ -346,7 +346,16 @@ R1 は未設定。
 
 ブラウザ → Next.js（rewrites）→ nginx → Laravel と2段中継されるので、何もしないと `$request->ip()` は **Next.js サーバーの IP** になり、全員が1つの枠を共有してしまう（ログインが全体で5回/分になる）。
 
-- nginx は受け取った `X-Forwarded-For` を引き継ぐ（`proxy_add_x_forwarded_for` 相当。php-fpm には `fastcgi_param HTTP_X_FORWARDED_FOR`）
+- nginx は受け取った `X-Forwarded-For` を引き継ぐ（FastCGI ではリクエストヘッダーが自動的に `HTTP_X_FORWARDED_FOR` として渡る）
 - Laravel の `TrustProxies` で、内部ネットワーク（Docker / Railway のプライベートネットワーク）からの `X-Forwarded-For` だけを信用する
-- **要検証（実装初日）**: Next.js の rewrites が `X-Forwarded-For` を付けて中継するか。付かない場合は `proxy.ts` でヘッダーを付ける
-- 検証用に、ローカルで `GET /api/debug/ip`（`APP_ENV=local` のときだけ有効）を用意して確かめる
+
+**確認済み（2026-09-30）**: Next.js の rewrites は、受け取った `X-Forwarded-For` を **そのまま中継するが、自分では付け足さない**（`next dev`・`next start` とも）。
+
+| 呼び方 | nginx に届いた `X-Forwarded-For` |
+|---|---|
+| ブラウザ側が `X-Forwarded-For: 203.0.113.9` を付けて送った | `203.0.113.9` |
+| 何も付けずに送った | 無し |
+
+- 本番では、ブラウザと Next.js の間にある Railway の入口のプロキシが `X-Forwarded-For` に利用者の IP を付ける見込みなので、`proxy.ts` は作らない。**デプロイ時に、Laravel から見た `$request->ip()` が利用者の IP になっているかを確かめる**（[07 の手動確認](07-dev-and-deploy.md#リリース前の手動確認)）。付いていなければ、そのとき `proxy.ts` で付ける
+- ローカルでは全員が同じ IP（Next.js のコンテナ）に見える。開発中は問題ない
+- 確かめるために、`GET /api/debug/ip`（`APP_ENV` が `local` か、確認用の環境変数が立っているときだけ有効）で `$request->ip()` を返す口を手順4で作る

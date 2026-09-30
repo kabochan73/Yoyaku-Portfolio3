@@ -142,20 +142,22 @@ E2E テストを入れない代わりに、デプロイ後に次を手で確認�
 9. スマホ幅で、トップのカレンダー・ダイアログ・管理カレンダーが崩れない（ページ全体が横にはみ出さない）
 10. Railway のログに、エラーが出ていない（`LOG_CHANNEL=stderr`）
 11. 別のブラウザで同じ週を開いておき、管理画面で臨時休業日を登録すると、60秒以内にその日が「－」になる（キャッシュが消えている）
+12. `GET /api/debug/ip` で、自分の端末の IP が返る（Next.js のコンテナの IP ではない）。Railway の入口が `X-Forwarded-For` を付けているかの確認（B12、[03](03-api.md#クライアントの-ip-をどう取るか)）
 
 ## 実装の順番
 
-> 手順1の時点で、トップを静的ページ（スタブサーバーでビルド）にして CI の「`/` が静的か」の確認まで通しておく。後から静的化すると、Cookie を読んでいる箇所を探して回ることになる
+> CI（GitHub Actions）は最後、本番デプロイの前に作る（2026-09-30 決定）。それまでは、テスト・整形・静的解析を手元で流す。
 
-1. リポジトリ・docker compose・CI の土台（空の Laravel / Next.js がテスト込みで CI を通る）
-   - この段階で **3つの要検証** を片付ける:
-     - Next.js の rewrites が `X-Forwarded-For` を付けて中継するか（[03](03-api.md#クライアントの-ip-をどう取るか)）
-     - トップが `○`（Static）でビルドされ、`/internal/revalidate` で作り直されるか（`next build && next start` で確認）
-     - Next.js の rewrites が `If-None-Match` と `304` をそのまま中継するか（[03](03-api.md#カレンダーの-etag--304)）
+1. リポジトリ・docker compose・テスト・整形・静的解析の土台（**完了 2026-09-30**）
+   - 初日の要検証3つは確認済み:
+     - rewrites は `X-Forwarded-For` をそのまま中継するが、付け足さない → 本番（Railway の入口）で付くかをデプロイ時に確かめる（[03](03-api.md#クライアントの-ip-をどう取るか)）
+     - トップは `○`（Static）・`Revalidate 1h` でビルドされ、`/internal/revalidate`（`revalidateTag("facility", { expire: 0 })`）の直後の1回目のアクセスから新しい値になる
+     - rewrites は `If-None-Match` と `304` をそのまま中継する（[03](03-api.md#カレンダーの-etag--304)）
 2. DB（マイグレーション・制約・シーダー）と制約のテスト
 3. `config/facility.php`・Enum・`Booking/`（`DayClosure` を含む）・`ClosedDays`（Unit / Feature テスト）
 4. エラー形式（`bootstrap/app.php`）・認証 API と、フロントの `api-client`・共通 UI 部品（`Dialog`, `Button`, `Skeleton`, `ErrorState` など）・`getCurrentUser`・ログイン / 登録画面
-5. `/facility`・`/calendar`（`CalendarFacts` の Redis キャッシュも含む）とトップページ（定期取得も含む）
+5. `/facility`・`/calendar`（`CalendarFacts` の Redis キャッシュも含む）とトップページ（定期取得も含む）。トップを静的ページにし、ビルド用のスタブサーバーもここで作る
 6. 予約・キャンセル（Action・Event・メール）とマイページ
 7. 管理画面（予約カレンダー → 設定3種 → ユーザー検索）
-8. 本番デプロイと手動確認
+8. CI（GitHub Actions。backend: Pint・Larastan・Pest、frontend: ESLint・Prettier・tsc・Jest・ビルド・トップが静的かの確認）
+9. 本番デプロイと手動確認

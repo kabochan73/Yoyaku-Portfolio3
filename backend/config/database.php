@@ -97,6 +97,9 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // 接続のたびに `set time zone 'Asia/Tokyo'` を流し、PostgreSQL 側の now() や
+            // timestamp の扱いをアプリ（config/app.php の timezone）と同じ日本時間にそろえる（B1）。
+            'timezone' => 'Asia/Tokyo',
         ],
 
         'sqlsrv' => [

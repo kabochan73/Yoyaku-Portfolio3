@@ -18,3 +18,9 @@ parameters:
         - app/
         - database/
         - routes/
+
+    # モデルの casts() の「中身」を読んで、プロパティの型を決める。
+    # 既定（false）では casts() の戻り値の PHPDoc（array<string, string>）しか見ないため、
+    # 'role' => UserRole::class のような変換が無いものとして扱われ、
+    # $user->role を string と誤解する（Enum との比較が「常に false」と誤って指摘される）
+    parseModelCastsMethod: true

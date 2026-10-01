@@ -16,8 +16,9 @@ use Tests\TestCase;
 | 方針は docs/06-testing.md を参照。
 |
 | - Feature テスト: Laravel のアプリを起動し、API を呼んだり DB を使ったりする
-| - Unit テスト  : DB などに触らない純粋なクラス（Booking/ など）を確かめる。
-|                  Laravel の起動も不要なので、TestCase は使わない（速い）
+| - Unit テスト  : DB に触らないクラス（Booking/ など）を確かめる。
+|                  DB は使わないが、エラーメッセージの翻訳（lang/ja）や ValidationException など
+|                  Laravel の機能は使うので、Laravel は起動する（TestCase を使う。DB は戻さない）
 |
 */
 
@@ -34,6 +35,9 @@ pest()->extend(TestCase::class)
         Cache::flush();
     })
     ->in('Feature');
+
+// Unit テスト: Laravel は起動するが、DB もキャッシュも使わないので戻す処理は付けない
+pest()->extend(TestCase::class)->in('Unit');
 
 /*
 |--------------------------------------------------------------------------

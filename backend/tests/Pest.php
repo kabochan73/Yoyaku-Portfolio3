@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
@@ -33,3 +34,42 @@ pest()->extend(TestCase::class)
         Cache::flush();
     })
     ->in('Feature');
+
+/*
+|--------------------------------------------------------------------------
+| 共通の関数
+|--------------------------------------------------------------------------
+|
+| 複数のテストファイルで使う関数。Pest はテストファイルを同じ場所に読み込むので、
+| 同じ名前の関数を各ファイルに書くと「すでに定義されている」エラーになる。共通のものはここに置く。
+|
+*/
+
+/**
+ * $insert を実行すると、名前が $constraint の DB 制約に違反して失敗することを確かめる。
+ *
+ * エラーの種類（SQLSTATE）と制約の名前の両方を見る。手順6以降で、この2つを使って
+ * DB のエラーを 409（slot_taken など）に変換するので、テストでも同じ2つを確かめておく。
+ *
+ * よく使う SQLSTATE:
+ * - 23P01 … 排他制約の違反（exclusion_violation）。例: 予約の時間帯が重なる
+ * - 23505 … 一意制約の違反（unique_violation）。例: 同じ日に2件目の予約、同じ休業日の二重登録
+ * - 23514 … CHECK 制約の違反（check_violation）。例: マイナスの金額
+ *
+ * @param  callable  $insert  制約に違反するはずの書き込み
+ * @param  string  $sqlState  期待するエラーの種類
+ * @param  string  $constraint  期待する制約（または索引）の名前
+ */
+function expectViolation(callable $insert, string $sqlState, string $constraint): void
+{
+    try {
+        $insert();
+    } catch (QueryException $e) {
+        expect($e->getCode())->toBe($sqlState)
+            ->and($e->getMessage())->toContain($constraint);
+
+        return;
+    }
+
+    test()->fail("制約 {$constraint} に違反するはずが、行が入ってしまった");
+}

@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 /*
@@ -45,24 +44,6 @@ function insertUser(string $email = 'taro@example.com'): int
         'created_at' => now(),
         'updated_at' => now(),
     ]);
-}
-
-/**
- * $insert を実行すると、名前が $constraint の制約に違反して失敗することを確かめる。
- * SQLSTATE（エラーの種類）と制約名の両方を見る。手順6で、この2つを使って 409 に変換するため。
- */
-function expectViolation(callable $insert, string $sqlState, string $constraint): void
-{
-    try {
-        $insert();
-    } catch (QueryException $e) {
-        expect($e->getCode())->toBe($sqlState)
-            ->and($e->getMessage())->toContain($constraint);
-
-        return;
-    }
-
-    test()->fail("制約 {$constraint} に違反するはずが、行が入ってしまった");
 }
 
 // ---------------------------------------------------------------------------

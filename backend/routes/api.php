@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +15,18 @@ use Illuminate\Support\Facades\Route;
 | 一覧は docs/03-api.md。すべての API に回数制限 'api' が付いている（bootstrap/app.php）。
 |
 */
+
+/*
+|--------------------------------------------------------------------------
+| 会員登録・ログイン（ログインしていなくても使える）
+|--------------------------------------------------------------------------
+|
+| throttle:login … IP + メールアドレスごとに 5回/分（パスワードの総当たりを防ぐ。AppServiceProvider）
+|
+*/
+Route::middleware('throttle:login')->group(function () {
+    Route::post('/register', RegisterController::class);
+});
 
 /*
 |--------------------------------------------------------------------------

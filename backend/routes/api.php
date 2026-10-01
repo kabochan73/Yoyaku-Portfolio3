@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\SessionController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -26,6 +27,7 @@ use Illuminate\Support\Facades\Route;
 */
 Route::middleware('throttle:login')->group(function () {
     Route::post('/register', RegisterController::class);
+    Route::post('/login', [SessionController::class, 'store']);
 });
 
 /*
@@ -37,6 +39,8 @@ Route::middleware('throttle:login')->group(function () {
 |
 */
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [SessionController::class, 'destroy']);
+
     // ログイン中のユーザー自身
     Route::get('/user', [UserController::class, 'show']);
 });

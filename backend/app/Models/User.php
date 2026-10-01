@@ -30,6 +30,20 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
+     * 属性の既定値。DB の既定値（role は 'user'）と同じ値を、モデルにも持たせる。
+     *
+     * DB は、role を指定せずに INSERT すると 'user' を入れる（users のマイグレーション）。
+     * ところが create() した直後の PHP 側のモデルは、DB が補った値を知らないので、role が null のまま残る。
+     * そのまま $user->role->value などを読むとエラーになる（会員登録の直後にユーザーを返すときなど）。
+     * ここで同じ既定値を持たせて、作った直後から role が分かるようにする。
+     *
+     * @var array<string, string>
+     */
+    protected $attributes = [
+        'role' => 'user',
+    ];
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

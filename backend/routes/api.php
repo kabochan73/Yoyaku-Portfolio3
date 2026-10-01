@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -14,10 +15,18 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// ログイン中のユーザー（install:api が作ったひな形。4-4 で UserResource を返す形に書き換える）
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+/*
+|--------------------------------------------------------------------------
+| ログインが必要な API
+|--------------------------------------------------------------------------
+|
+| auth:sanctum … ログインのセッション Cookie を確かめる。未ログインなら 401 unauthenticated
+|
+*/
+Route::middleware('auth:sanctum')->group(function () {
+    // ログイン中のユーザー自身
+    Route::get('/user', [UserController::class, 'show']);
+});
 
 /*
 | 利用者の IP の確認用（B12。docs/03 の「クライアントの IP をどう取るか」）。

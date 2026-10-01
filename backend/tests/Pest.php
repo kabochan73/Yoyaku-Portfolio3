@@ -77,3 +77,23 @@ function expectViolation(callable $insert, string $sqlState, string $constraint)
 
     test()->fail("制約 {$constraint} に違反するはずが、行が入ってしまった");
 }
+
+/**
+ * 自分のフロント（Next.js、http://localhost:3000）から来たリクエストにする。
+ *
+ * ログインのセッション Cookie は、Sanctum が「自分のフロントから来た」と判断したリクエストにしか効かない
+ * （bootstrap/app.php の statefulApi()。判断には Referer / Origin ヘッダーを使う）。
+ * ログインやセッションが関わる API のテストでは、これを付けて呼ぶ。
+ *
+ * 使い方: fromFrontend()->postJson('/api/login', [...])
+ */
+function fromFrontend(): TestCase
+{
+    /** @var TestCase $test */
+    $test = test();
+
+    return $test->withHeaders([
+        'Referer' => 'http://localhost:3000/',
+        'Origin' => 'http://localhost:3000',
+    ]);
+}

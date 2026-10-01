@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Booking\DayClosure;
 use App\Booking\TimeSlot;
 use App\Models\Holiday;
 use App\Models\Price;
@@ -81,7 +82,9 @@ final class DemoDataSeeder extends Seeder
     {
         // 料金表（InitialDataSeeder で入る）。金額は予約を作るときと同じ方法で計算する
         $prices = Price::table();
-        $closedWeekdays = RegularHoliday::query()->pluck('day_of_week')->all();
+        // 定休日・臨時休業日（14日分の判定のために、先にまとめて読んでおく）
+        /** @var list<int> $regularHolidays */
+        $regularHolidays = RegularHoliday::query()->pluck('day_of_week')->all();
         $holidayDates = Holiday::query()->pluck('date')
             ->map(fn (CarbonImmutable $date): string => $date->toDateString())
             ->all();
@@ -90,8 +93,9 @@ final class DemoDataSeeder extends Seeder
         for ($offset = 1; $offset <= self::DAYS; $offset++) {
             $date = today()->toImmutable()->addDays($offset);
 
-            // 定休日・臨時休業日には予約を入れない
-            if (in_array($date->dayOfWeek, $closedWeekdays, true) || in_array($date->toDateString(), $holidayDates, true)) {
+            // 定休日・臨時休業日には予約を入れない（判定は予約時・カレンダーと同じ DayClosure）
+            $isHoliday = in_array($date->toDateString(), $holidayDates, true);
+            if (DayClosure::reason($date, $regularHolidays, $isHoliday) !== null) {
                 continue;
             }
 

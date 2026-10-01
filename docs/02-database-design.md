@@ -171,6 +171,11 @@ CREATE UNIQUE INDEX reservations_user_date_confirmed_unique
 | シーダー | 内容 | 実行する環境 |
 |---|---|---|
 | `InitialDataSeeder` | 管理者（`ADMIN_EMAIL` / `ADMIN_PASSWORD`）、料金2行、定休日（月曜） | 全環境 |
-| `DemoDataSeeder` **【R2】** | デモ会員数名と、今後2週間分の予約 | ローカル・本番デモ |
+| `DemoDataSeeder` **【R2】** | デモ会員3人（パスワードは `password`）と、明日から14日分の予約（会員の予約と電話予約） | ローカルでは `db:seed` で自動。本番は `--class=DemoDataSeeder` を明示したときだけ（入れるかは手順9で決める） |
 
-管理者のメール・パスワードは `env()` ではなく `config('facility.admin.*')` 経由で読む（`config:cache` 後に `env()` が `null` になるため）。
+- 管理者のメール・パスワードは `env()` ではなく `config('facility.admin.*')` 経由で読む（`config:cache` 後に `env()` が `null` になるため）。未設定ならエラーで止める
+- **何度実行しても安全にする**（2026-10-01）。本番でうっかり2回流しても、管理者が画面で変えた値を初期値に戻さない
+  - 管理者: 同じメールのユーザーがいれば何もしない（R1 は `updateOrCreate` で毎回パスワードを上書きしていた）
+  - 料金・定休日: 料金の行がまだ無いとき（＝初回）だけ入れる
+  - デモデータ: デモ会員がすでにいれば何もしない
+- `DemoDataSeeder` は Factory を使わない。Factory が使う Faker は開発用のパッケージで、本番（`composer install --no-dev`）には入っていないため

@@ -154,7 +154,7 @@ E2E テストを入れない代わりに、デプロイ後に次を手で確認�
      - トップは `○`（Static）・`Revalidate 1h` でビルドされ、`/internal/revalidate`（`revalidateTag("facility", { expire: 0 })`）の直後の1回目のアクセスから新しい値になる
      - rewrites は `If-None-Match` と `304` をそのまま中継する（[03](03-api.md#カレンダーの-etag--304)）
 2. DB（マイグレーション・制約）と制約のテスト（**完了 2026-10-01**。シーダーは手順3に移した）
-3. `config/facility.php`・Enum・モデル・Factory・シーダー・`Booking/`（`DayClosure` を含む）・`ClosedDays`（Unit / Feature テスト）
+3. `config/facility.php`・Enum・モデル・Factory・シーダー・`Booking/`（`DayClosure` を含む）・`ClosedDays`（Unit / Feature テスト）（**完了 2026-10-01**）
 4. エラー形式（`bootstrap/app.php`）・認証 API と、フロントの `api-client`・共通 UI 部品（`Dialog`, `Button`, `Skeleton`, `ErrorState` など）・`getCurrentUser`・ログイン / 登録画面
 5. `/facility`・`/calendar`（`CalendarFacts` の Redis キャッシュも含む）とトップページ（定期取得も含む）。トップを静的ページにし、ビルド用のスタブサーバーもここで作る
 6. 予約・キャンセル（Action・Event・メール）とマイページ

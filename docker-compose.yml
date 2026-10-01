@@ -40,12 +40,18 @@ services:
   queue-worker:
     <<: *backend
     command: php artisan queue:work database --tries=3
+    # 止まったら自動で起動し直す（手で docker compose stop したときは除く）。
+    # Mac のスリープから戻ったときなどに、ジョブの時間切れの計測が進んで
+    # 「Job timed out」で worker が止まることがあるため（2026-10-01 に実際に発生）
+    restart: unless-stopped
 
   # 定期実行（古い予約の削除 model:prune など）。
   # schedule:work は1分ごとにスケジュールを確認し続ける、開発・コンテナ向けのコマンド。
   scheduler:
     <<: *backend
     command: php artisan schedule:work
+    # 止まったら自動で起動し直す（queue-worker と同じ理由）
+    restart: unless-stopped
 
   # -------------------------------------------------------------------------
   # nginx: HTTP を受けて、PHP のリクエストだけ backend（php-fpm）に渡す

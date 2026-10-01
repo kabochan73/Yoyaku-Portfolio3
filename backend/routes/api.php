@@ -43,6 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // ログイン中のユーザー自身
     Route::get('/user', [UserController::class, 'show']);
+    Route::put('/user/profile', [UserController::class, 'updateProfile']);
 });
 
 /*

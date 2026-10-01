@@ -6,9 +6,12 @@ namespace App\Models;
 
 use App\Enums\ReservationStatus;
 use Carbon\CarbonInterface;
+use Database\Factories\ReservationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -20,6 +23,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * - 予約者名（booker_name）と金額（price）は予約時点の値。後で会員の名前や料金が変わっても変えない
  *
  * 予約の振る舞い（timeSlot()・isCancellable()・cancel()）は、使う部品ができる手順で足す（3-4・手順6）。
+ *
+ * 【古い予約の自動削除】
+ * 予約日が「管理画面で遡れる範囲（3か月）」より前の予約は、毎日まとめて削除する（docs/01 の「データ保持」）。
+ * MassPrunable を付けると、Laravel 標準の `php artisan model:prune` が prunable() の条件で削除する。
+ * 毎日の実行は routes/console.php に登録している。
+ * R1 は独自のコマンド（reservations:prune-old）を書いていたが、標準の仕組みに置き換えた。
  */
 #[Fillable([
     'user_id',
@@ -33,6 +42,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 final class Reservation extends Model
 {
+    /** @use HasFactory<ReservationFactory> */
+    use HasFactory;
+
+    use MassPrunable;
+
     /**
      * DB の値を PHP の型に変換する設定。
      *
@@ -53,6 +67,25 @@ final class Reservation extends Model
             'price' => 'integer',
             'cancelled_at' => 'immutable_datetime',
         ];
+    }
+
+    /**
+     * 削除の対象: 予約日が「今日から admin_lookback_months（3か月）前」の日より前の予約。
+     * 状態（確定済み・キャンセル済み）は問わない。
+     *
+     * 例: 今日が 10/6 なら、7/6 の予約は残り、7/5 以前の予約が消える。
+     * subMonthsNoOverflow: 月末で溢れない引き算（5/31 の3か月前は 2/28。B13 と同じ考え方）
+     *
+     * MassPrunable は1件ずつ読まずに DELETE 文1回でまとめて消す（速いが、モデルのイベントは起きない）。
+     * 予約の削除で起きてほしい処理（メールなど）は無いので、これでよい。
+     *
+     * @return Builder<self>
+     */
+    public function prunable(): Builder
+    {
+        $months = (int) config('facility.rules.admin_lookback_months');
+
+        return self::query()->where('date', '<', today()->subMonthsNoOverflow($months)->toDateString());
     }
 
     /**

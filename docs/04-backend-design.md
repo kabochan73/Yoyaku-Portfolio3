@@ -36,9 +36,8 @@ backend/
 │   ├── Booking/                        # 予約の「値」とルール（DB に触らないクラス）
 │   │   ├── TimeSlot.php                # 日付 + 開始時 + 終了時 の値オブジェクト
 │   │   ├── BookingRules.php            # config/facility.php の値を持ち、TimeSlot の時刻・期間を検査する
-│   │   ├── PriceTable.php              # 平日・土日の単価の値オブジェクト
+│   │   ├── PriceTable.php              # 平日・土日の単価の値オブジェクト。priceFor(TimeSlot) で金額も計算する
 │   │   ├── DayClosure.php              # 定休日・休業日の判定（純粋関数。予約時とカレンダーで共通）
-│   │   └── PriceCalculator.php         # TimeSlot × PriceTable → 金額
 │   ├── Enums/
 │   │   ├── UserRole.php
 │   │   ├── ReservationStatus.php
@@ -194,7 +193,6 @@ final class CreateReservation
     public function __construct(
         private BookingRules $rules,
         private ClosedDays $closedDays,
-        private PriceCalculator $prices,
     ) {}
 
     public function forMember(User $user, TimeSlot $slot): Reservation
@@ -217,7 +215,7 @@ final class CreateReservation
             try {
                 $reservation = Reservation::create([
                     // ...
-                    'price' => $this->prices->calculate($slot, Price::table()),
+                    'price' => Price::table()->priceFor($slot),
                 ]);
             } catch (QueryException $e) {
                 throw $this->toConflict($e); // 23P01 → slot_taken / 23505 → already_booked_that_day

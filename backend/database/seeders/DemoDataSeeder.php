@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Enums\PriceType;
+use App\Booking\TimeSlot;
 use App\Models\Holiday;
 use App\Models\Price;
 use App\Models\RegularHoliday;
@@ -79,9 +79,8 @@ final class DemoDataSeeder extends Seeder
      */
     private function seedReservations(array $members): void
     {
-        // 料金（InitialDataSeeder で入る）。曜日で平日・土日の単価を使い分ける。
-        // ※ 料金の計算は 3-5 で PriceCalculator にまとめる。それまではここで同じ計算をしている
-        $amountPerHour = Price::query()->pluck('amount_per_hour', 'type')->all();
+        // 料金表（InitialDataSeeder で入る）。金額は予約を作るときと同じ方法で計算する
+        $prices = Price::table();
         $closedWeekdays = RegularHoliday::query()->pluck('day_of_week')->all();
         $holidayDates = Holiday::query()->pluck('date')
             ->map(fn (CarbonImmutable $date): string => $date->toDateString())
@@ -97,8 +96,6 @@ final class DemoDataSeeder extends Seeder
             }
 
             $slots = self::DAILY_SLOTS[$offset % count(self::DAILY_SLOTS)];
-            $priceType = $date->isWeekend() ? PriceType::Weekend : PriceType::Weekday;
-            $unitPrice = (int) ($amountPerHour[$priceType->value] ?? 0);
 
             // 会員の予約。会員を日ごとに順番に割り当てる（1人1日1件を守る）
             $member = $members[$offset % count($members)];
@@ -109,7 +106,7 @@ final class DemoDataSeeder extends Seeder
                 'start_hour' => $start,
                 'end_hour' => $end,
                 'booker_name' => $member->name,
-                'price' => $unitPrice * ($end - $start),
+                'price' => $prices->priceFor(new TimeSlot($date, $start, $end)),
             ]);
 
             // 電話予約（管理者の代理登録）。2日に1件
@@ -121,7 +118,7 @@ final class DemoDataSeeder extends Seeder
                     'start_hour' => $start,
                     'end_hour' => $end,
                     'booker_name' => '電話 田中',
-                    'price' => $unitPrice * ($end - $start),
+                    'price' => $prices->priceFor(new TimeSlot($date, $start, $end)),
                 ]);
             }
         }

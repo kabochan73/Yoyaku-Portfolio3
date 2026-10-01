@@ -22,7 +22,7 @@
 
 | 種類 | 対象 | 例 |
 |---|---|---|
-| Unit | `Booking/`（`TimeSlot`, `BookingRules`, `PriceCalculator`, `DayClosure`）、Enum | 営業時間・利用時間の境界値、平日 / 土日の料金。`$now` を引数で渡すので DB も時刻の固定も要らない |
+| Unit | `Booking/`（`TimeSlot`, `BookingRules`, `PriceTable`, `DayClosure`）、Enum | 営業時間・利用時間の境界値、平日 / 土日の料金。`$now` を引数で渡すので DB も時刻の固定も要らない |
 | Feature（参照） | `ClosedDays`, `CalendarQuery` | 定休日・休業日の判定が予約時とカレンダーで一致する（カレンダーで `available` の枠は予約でき、`closed_reason` のある日は 422） |
 | Feature | API 1本ずつ | ステータスコード、レスポンスの形、DB の状態、発行されたイベント |
 | Feature（DB 制約） | マイグレーションの制約 | 重なる確定済み予約を直接 INSERT すると `23P01` になる。キャンセル済みとは重なってよい |

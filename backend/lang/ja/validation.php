@@ -40,6 +40,7 @@ return [
         'numeric' => ':attributeは:min以上で指定してください。',
         'string' => ':attributeは:min文字以上で入力してください。',
     ],
+    'present' => ':attributeを指定してください。',
     'required' => ':attributeを入力してください。',
     'required_with' => ':valuesを変更するときは、:attributeも入力してください。',
     'string' => ':attributeは文字列で入力してください。',

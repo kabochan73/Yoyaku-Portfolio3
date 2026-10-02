@@ -98,6 +98,10 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'can:admin'])->group(functio
 
     // 予約のキャンセル（誰の予約でも。理由は「管理者によるキャンセル」）
     Route::post('/reservations/{reservation}/cancel', [Admin\ReservationController::class, 'cancel']);
+
+    // 施設の設定（料金・定休日）。返すのは更新後の施設情報（/facility と同じ形）
+    Route::put('/prices', [Admin\SettingsController::class, 'updatePrices']);
+    Route::put('/regular-holidays', [Admin\SettingsController::class, 'updateRegularHolidays']);
 });
 
 /*

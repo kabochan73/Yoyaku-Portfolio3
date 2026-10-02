@@ -69,6 +69,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // 自分の予約（マイページ）
     Route::get('/user/reservations', [ReservationController::class, 'index']);
+
+    // 予約する
+    Route::post('/reservations', [ReservationController::class, 'store']);
 });
 
 /*

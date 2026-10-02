@@ -4,8 +4,8 @@ import { http, HttpResponse } from "msw";
 import { queryKeys } from "@/lib/query-keys";
 import { server } from "@/test/msw/server";
 import { createTestQueryClient, withQueryClient } from "@/test/render";
-import type { User } from "../types";
-import { LoginForm } from "./LoginForm";
+import type { User } from "@/features/auth/types";
+import { LoginForm } from "@/features/auth/components/LoginForm";
 
 /*
  * ログインのフォームのテスト。MSW で POST /api/login の返事を変えて、画面の動きを確かめる。

@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { server } from "@/test/msw/server";
-import { getCurrentUser } from "./server";
-import type { User } from "./types";
+import { getCurrentUser } from "@/features/auth/server";
+import type { User } from "@/features/auth/types";
 
 /*
  * getCurrentUser()（サーバーでログイン中のユーザーを取る）のテスト。

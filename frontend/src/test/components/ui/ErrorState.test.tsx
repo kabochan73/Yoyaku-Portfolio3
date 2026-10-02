@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ErrorState } from "./ErrorState";
+import { ErrorState } from "@/components/ui/ErrorState";
 
 it("エラー文を出し、「再読み込み」を押すと処理が呼ばれる", async () => {
   const onRetry = jest.fn();

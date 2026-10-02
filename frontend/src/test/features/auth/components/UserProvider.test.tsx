@@ -3,9 +3,9 @@ import { http, HttpResponse } from "msw";
 import { queryKeys } from "@/lib/query-keys";
 import { server } from "@/test/msw/server";
 import { createTestQueryClient, withQueryClient } from "@/test/render";
-import { useCurrentUser } from "../hooks";
-import type { User } from "../types";
-import { UserProvider } from "./UserProvider";
+import { useCurrentUser } from "@/features/auth/hooks";
+import type { User } from "@/features/auth/types";
+import { UserProvider } from "@/features/auth/components/UserProvider";
 
 /*
  * UserProvider（サーバーで取ったユーザーを先に入れておく部品）のテスト。

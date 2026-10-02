@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { FormField } from "./FormField";
+import { FormField } from "@/components/ui/FormField";
 
 it("ラベルで入力欄を探せる（ラベルと入力欄が結びついている）", () => {
   render(

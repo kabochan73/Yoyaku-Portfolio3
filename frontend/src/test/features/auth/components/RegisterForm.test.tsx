@@ -4,8 +4,8 @@ import { http, HttpResponse } from "msw";
 import { queryKeys } from "@/lib/query-keys";
 import { server } from "@/test/msw/server";
 import { createTestQueryClient, withQueryClient } from "@/test/render";
-import type { User } from "../types";
-import { RegisterForm } from "./RegisterForm";
+import type { User } from "@/features/auth/types";
+import { RegisterForm } from "@/features/auth/components/RegisterForm";
 
 /*
  * 会員登録のフォームのテスト。MSW で POST /api/register の返事を変えて、画面の動きを確かめる。

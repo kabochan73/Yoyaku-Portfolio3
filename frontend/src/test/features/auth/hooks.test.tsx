@@ -4,8 +4,8 @@ import { ApiError } from "@/lib/api-error";
 import { queryKeys } from "@/lib/query-keys";
 import { server } from "@/test/msw/server";
 import { createTestQueryClient, withQueryClient } from "@/test/render";
-import { useCurrentUser, useLogin, useLogout } from "./hooks";
-import type { User } from "./types";
+import { useCurrentUser, useLogin, useLogout } from "@/features/auth/hooks";
+import type { User } from "@/features/auth/types";
 
 /*
  * 認証の hook のテスト。MSW で API の返事を決めて、hook が返すものと、保存されるデータを確かめる。

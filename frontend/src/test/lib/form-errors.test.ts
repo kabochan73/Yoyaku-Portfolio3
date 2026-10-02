@@ -1,5 +1,5 @@
-import { ApiError, NETWORK_ERROR_MESSAGE } from "./api-error";
-import { applyServerErrors } from "./form-errors";
+import { ApiError, NETWORK_ERROR_MESSAGE } from "@/lib/api-error";
+import { applyServerErrors } from "@/lib/form-errors";
 
 /*
  * applyServerErrors（送信の失敗をフォームに振り分ける）のテスト。

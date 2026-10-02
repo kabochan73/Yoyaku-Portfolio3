@@ -1,11 +1,11 @@
 import { http, HttpResponse } from "msw";
 import { server } from "@/test/msw/server";
-import { api } from "./api-client";
+import { api } from "@/lib/api-client";
 import {
   ApiError,
   NETWORK_ERROR_MESSAGE,
   UNEXPECTED_ERROR_MESSAGE,
-} from "./api-error";
+} from "@/lib/api-error";
 
 /*
  * api（ブラウザから API を呼ぶ axios）のテスト。

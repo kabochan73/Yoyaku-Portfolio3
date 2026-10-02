@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Button } from "./Button";
+import { Button } from "@/components/ui/Button";
 
 it("押せる間は、クリックが届く", async () => {
   const onClick = jest.fn();

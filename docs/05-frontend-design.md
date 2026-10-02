@@ -73,7 +73,7 @@ frontend/src/
 │   ├── use-debounced-value.ts
 │   ├── query-config.ts             # 定期取得の間隔など
 │   └── env.ts                      # 環境変数を zod で検証
-└── test/                           # MSW のハンドラ、テスト用 render
+└── test/                           # テスト（src と同じフォルダ構成）、MSW のハンドラ、テスト用 render
 ```
 
 - 機能どうしの依存は `admin → calendar / reservations → facility / auth` の一方向。逆向きの import はしない

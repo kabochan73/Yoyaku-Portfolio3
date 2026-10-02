@@ -4,7 +4,7 @@ import { http, HttpResponse } from "msw";
 import type { User } from "@/features/auth/types";
 import { server } from "@/test/msw/server";
 import { createTestQueryClient, withQueryClient } from "@/test/render";
-import { HeaderUserMenu } from "./HeaderUserMenu";
+import { HeaderUserMenu } from "@/components/layout/HeaderUserMenu";
 
 /*
  * ヘッダーの右側のテスト。MSW で GET /api/user の返事を変えて、状態ごとの表示を確かめる。

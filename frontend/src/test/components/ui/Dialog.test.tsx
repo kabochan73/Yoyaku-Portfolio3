@@ -1,7 +1,7 @@
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { Dialog } from "./Dialog";
+import { Dialog } from "@/components/ui/Dialog";
 
 /*
  * Dialog のテスト。jsdom の <dialog> は jest.setup.ts で補っている（open の印を付ける・外すだけ）。

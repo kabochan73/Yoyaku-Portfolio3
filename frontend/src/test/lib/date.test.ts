@@ -1,4 +1,4 @@
-import { todayInTokyo } from "./date";
+import { todayInTokyo } from "@/lib/date";
 
 /*
  * フロント版の B1: 端末のタイムゾーンに関係なく、日本の日付を返すこと。

@@ -12,6 +12,11 @@
 export const queryKeys = {
   /** ログイン中のユーザー（未ログインなら null） */
   user: ["user"] as const,
+  /**
+   * 自分の今日以降の予約（GET /api/user/reservations。マイページ）。
+   * user の下に置くので、ユーザーのデータをまとめて捨てるとき（ログアウト）に一緒に消える
+   */
+  myReservations: ["user", "reservations"] as const,
   /** 施設情報（GET /api/facility）。トップではサーバーで取った値を入れて、ブラウザでは取り直さない */
   facility: ["facility"] as const,
   /** 公開のカレンダー（GET /api/calendar） */

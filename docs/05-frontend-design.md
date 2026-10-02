@@ -321,7 +321,9 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
 
 - Sanctum は `Referer` / `Origin` が `SANCTUM_STATEFUL_DOMAINS` に含まれるときだけ Cookie セッションを見るので、`Referer` を付ける
 - `cache()` で1リクエスト内の重複呼び出しをまとめる
-- 保護されたページでは、取れたユーザーを `UserProvider` で `useCurrentUser()` の `initialData` にする。ヘッダーもこのページではスケルトンを出さずに済む
+- 保護されたページでは、取れたユーザーを `UserProvider` で TanStack Query に先に入れる（`setQueryData`）。ヘッダーやページの `useCurrentUser()` は `GET /api/user` を取り直さずに済む
+  - ヘッダーは `UserProvider` より前に描かれるので、サーバーで作る HTML ではスケルトンのまま。ブラウザで描き直した直後にボタンに替わる（通信は待たない）
+- `serverFetch()` は、届いた `Cookie` と `X-Forwarded-For` を引き継ぎ、`Referer` に `FRONTEND_URL` を付ける
 - **レイアウトでの判定は画面の出し分けのためで、守りではない**。守りは API 側の `auth:sanctum` と `can:admin`。レイアウトはクライアント側の画面遷移では再実行されないことがあるので、これに頼らない
 
 ### セッション切れ

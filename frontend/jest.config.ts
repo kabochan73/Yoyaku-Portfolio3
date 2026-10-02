@@ -13,6 +13,8 @@ import nextJest from "next/jest.js";
  * 中身は何でもよい（すでに設定されていればそれを使う）。
  */
 process.env.API_URL ??= "http://api.test/api";
+// サーバーから API を呼ぶときの Referer（src/lib/env.ts）。テストでは届いたかを確かめるだけ
+process.env.FRONTEND_URL ??= "http://frontend.test";
 
 /*
  * テストは「日本以外の時刻設定の端末」で動かす。

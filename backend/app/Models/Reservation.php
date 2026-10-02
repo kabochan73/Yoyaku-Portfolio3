@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\DB;
 
 /**
  * 予約。テーブルの設計と DB の制約は docs/02 と、reservations のマイグレーションを参照。
@@ -89,6 +90,24 @@ final class Reservation extends Model
         $months = (int) config('facility.rules.admin_lookback_months');
 
         return self::query()->where('date', '<', today()->subMonthsNoOverflow($months)->toDateString());
+    }
+
+    /**
+     * その日付の予約に関わる処理を、1つずつ順番に行わせるロックを取る（docs/04 の「臨時休業日との競合」）。
+     * トランザクションの中で呼ぶ。ロックはトランザクションが終わると自動で外れる。
+     *
+     * 予約の作成（CreateReservation）と臨時休業日の登録（CloseDay）の両方が、最初にこれを呼ぶ。
+     * 次の順で起きて、休業日に予約が残るのを防ぐ:
+     *   1. 会員: 休業日でないことを確かめる
+     *   2. 管理者: その日を休業日にし、その日の予約（まだ無い）をキャンセルして commit
+     *   3. 会員: 予約を INSERT して commit → 休業日なのに予約がある
+     * 同じ日付の処理は、先にロックを取った方が終わるまで、後の方が待つ。違う日付どうしは待たせない。
+     *
+     * pg_advisory_xact_lock は、表の行ではなく「数字」にかけるロック。日付の文字列を数字（crc32）にして使う。
+     */
+    public static function lockDate(CarbonImmutable $date): void
+    {
+        DB::statement('SELECT pg_advisory_xact_lock(?)', [crc32('reservation-date:'.$date->toDateString())]);
     }
 
     /**

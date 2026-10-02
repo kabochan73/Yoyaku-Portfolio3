@@ -72,10 +72,11 @@ final readonly class CreateReservation
     {
         try {
             return DB::transaction(function () use ($slot, $bookerName, $user): Reservation {
-                $this->lockDate($slot);
+                // その日付のロック（臨時休業日の登録と同時に起きても、休業日に予約が残らないように）
+                Reservation::lockDate($slot->date);
 
                 $this->rules->assertValidSlot($slot, now()->toImmutable());
-                // ロックを取った後に調べる（下の lockDate() の説明）
+                // ロックを取った後に調べる（Reservation::lockDate() の説明）
                 $this->assertOpen($slot);
 
                 $reservation = $this->insert($slot, $bookerName, $user);
@@ -95,24 +96,6 @@ final readonly class CreateReservation
             }
             throw $e;
         }
-    }
-
-    /**
-     * その日付のロックを取る（トランザクションが終わるまで持ち、終わると自動で外れる）。
-     *
-     * 【臨時休業日との競合】次の順で起きると、休業日に予約が残ってしまう:
-     *   1. 会員: 休業日でないことを確かめる
-     *   2. 管理者: その日を休業日にし、その日の予約（まだ無い）をキャンセルして commit
-     *   3. 会員: 予約を INSERT して commit → 休業日なのに予約がある
-     * 予約と休業日の登録（手順7の CloseDay）の両方が、最初に同じ日付のロックを取ることで、
-     * 同じ日付の処理を1つずつ順番に行わせる。休業日かどうかは、ロックを取った後に調べる。
-     *
-     * pg_advisory_xact_lock は、表の行ではなく「数字」に対してかけるロック。日付の文字列を数字（crc32）にして使う。
-     * 違う日付どうしは待たせない。
-     */
-    private function lockDate(TimeSlot $slot): void
-    {
-        DB::statement('SELECT pg_advisory_xact_lock(?)', [crc32('reservation-date:'.$slot->date->toDateString())]);
     }
 
     /**

@@ -15,7 +15,7 @@ use RuntimeException;
  * レスポンスへの変換は ApiExceptionRenderer が行う:
  *   { "message": "...", "code": "slot_taken", ...追加情報 }
  *
- * 場面ごとの作り方は、下の static メソッド（slotTaken() など）を使う。手順7の休業日の分は、そのときに足す。
+ * 場面ごとの作り方は、下の static メソッド（slotTaken() など）を使う。
  * 想定内の失敗なので、ログには残さない（bootstrap/app.php の dontReport）。
  */
 final class ConflictException extends RuntimeException
@@ -57,5 +57,25 @@ final class ConflictException extends RuntimeException
     public static function reservationNotCancellable(): self
     {
         return new self('reservation_not_cancellable', __('booking.reservation_not_cancellable'));
+    }
+
+    /**
+     * 臨時休業日にしようとした日に、キャンセルされる予約がある（管理者の確認が必要。docs/03 の POST /admin/holidays）。
+     * 件数をレスポンスに足す: { "message": "...", "code": "holiday_has_reservations", "reservation_count": 2 }
+     * 管理者が確認したら、cancel_reservations: true で送り直す。
+     */
+    public static function holidayHasReservations(int $count): self
+    {
+        return new self(
+            'holiday_has_reservations',
+            __('booking.holiday_has_reservations', ['count' => $count]),
+            ['reservation_count' => $count],
+        );
+    }
+
+    /** その日はすでに臨時休業日として登録されている（holidays の一意制約 holidays_date_unique の違反） */
+    public static function holidayAlreadyExists(): self
+    {
+        return new self('holiday_already_exists', __('booking.holiday_already_exists'));
     }
 }

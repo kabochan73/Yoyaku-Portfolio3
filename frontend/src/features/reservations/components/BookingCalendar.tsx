@@ -1,6 +1,14 @@
 "use client";
 
-import { useState, useSyncExternalStore, type ReactNode } from "react";
+import Link from "next/link";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
+import { Alert } from "@/components/ui/Alert";
 import { ErrorState } from "@/components/ui/ErrorState";
 import { CalendarGrid } from "@/features/calendar/components/CalendarGrid";
 import { SelectionHint } from "@/features/calendar/components/SelectionHint";
@@ -15,7 +23,14 @@ import {
 import type { CalendarDay } from "@/features/calendar/types";
 import { useFacility } from "@/features/facility/hooks";
 import { addDays, mondayOf, todayInTokyo } from "@/lib/date";
-import { formatWeekRange } from "@/lib/format";
+import {
+  formatDateJa,
+  formatHourRange,
+  formatWeekRange,
+  formatYen,
+} from "@/lib/format";
+import type { Reservation } from "../types";
+import { ReservationConfirmDialog } from "./ReservationConfirmDialog";
 
 /*
  * トップの週間カレンダー（docs/08 の 3）。空き状況を出し、枠を選ばせる。
@@ -24,8 +39,10 @@ import { formatWeekRange } from "@/lib/format";
  * - useCalendar（空き状況。60秒ごとに取り直す）・useFacility（営業時間・2〜4時間のルール）
  * - selectSlot（枠を押したときの次の状態。selection.ts）
  * - WeekNavigator・SelectionHint・CalendarGrid（表示）
+ * - ReservationConfirmDialog（選び終わったら開く確認ダイアログ。6-6）
  *
- * 選び終わったら、手順6で予約の確認ダイアログを開く。それまでは、選んだ内容を案内に出すだけ。
+ * 予約できたら、ダイアログを閉じて、カレンダーの上に「予約しました」と出す（docs/08 の 3.6）。
+ * R1 はダイアログを閉じるだけで、予約できたのか分かりにくかった。
  *
  * 【「今日」はブラウザで決める】
  * トップは静的ページで、HTML はビルドのとき（と1時間ごとの作り直しのとき）に作られる。
@@ -81,6 +98,17 @@ function WeekCalendar({
   const { data: facility } = useFacility();
   const calendar = useCalendar(weekStart);
   const [selection, setSelection] = useState<Selection>(IDLE);
+  // 直前に予約できた予約。カレンダーの上に完了のメッセージを出す。次に枠を選ぶか、週を変えるまで出しておく
+  const [reserved, setReserved] = useState<Reservation | null>(null);
+  const reservedMessageRef = useRef<HTMLDivElement>(null);
+
+  // 予約できたら、完了のメッセージにフォーカスを移す（docs/08 の 1.3）。
+  // ダイアログを開いた枠は「予約済」になって押せなくなるので、フォーカスを元の枠には戻せないため
+  useEffect(() => {
+    if (reserved) {
+      reservedMessageRef.current?.focus();
+    }
+  }, [reserved]);
 
   // 施設情報は FacilityProvider がサーバーで取った値を入れているので、ここで無いことはない
   if (!facility) {
@@ -98,8 +126,9 @@ function WeekCalendar({
   const switching = calendar.isPlaceholderData;
 
   const changeWeek = (next: string) => {
-    // 週を変えたら選択は解除する（docs/08 の 3.5）
+    // 週を変えたら選択は解除する（docs/08 の 3.5）。完了のメッセージも消す
     setSelection(IDLE);
+    setReserved(null);
     onWeekChange(next);
   };
 
@@ -108,13 +137,50 @@ function WeekCalendar({
     if (switching) {
       return;
     }
+    // 次の枠を選び始めたら、完了のメッセージは消す
+    setReserved(null);
     setSelection((current) =>
       selectSlot(current, { date, hour }, getStatus, rules),
     );
   };
 
+  // 選び終わったら確認ダイアログを開く（選び終わっていなければ閉じている）
+  const selectedSlot =
+    selection.kind === "complete"
+      ? {
+          date: selection.date,
+          startHour: selection.startHour,
+          endHour: selection.endHour,
+        }
+      : null;
+
   return (
     <CalendarSection>
+      {reserved && (
+        // tabIndex={-1}: ふだんは Tab で止まらないが、プログラムからフォーカスを移せるようにする
+        <div
+          ref={reservedMessageRef}
+          tabIndex={-1}
+          className="mb-4 outline-none"
+        >
+          <Alert tone="success">
+            <p>予約しました。確認メールをお送りしました。</p>
+            {/* 金額はサーバーが確定した金額（見積もりではない。D8） */}
+            <p className="mt-1">
+              {formatDateJa(reserved.date)}{" "}
+              {formatHourRange(reserved.start_hour, reserved.end_hour)}（
+              {formatYen(reserved.price)}）
+            </p>
+            <Link
+              href="/mypage"
+              className="mt-1 inline-block font-medium underline"
+            >
+              マイページで確認
+            </Link>
+          </Alert>
+        </div>
+      )}
+
       <WeekNavigator
         weekLabel={formatWeekRange(weekStart)}
         // 今週より前には戻れない
@@ -152,6 +218,16 @@ function WeekCalendar({
           />
         </>
       )}
+
+      <ReservationConfirmDialog
+        slot={selectedSlot}
+        // 戻る・Esc・背景のクリック: 選択を解除して閉じる
+        onClose={() => setSelection(IDLE)}
+        onReserved={(reservation) => {
+          setSelection(IDLE);
+          setReserved(reservation);
+        }}
+      />
     </CalendarSection>
   );
 }

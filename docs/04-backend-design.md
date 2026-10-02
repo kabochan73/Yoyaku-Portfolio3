@@ -71,8 +71,9 @@ backend/
 │       └── ClosedDays.php              # 予約時の定休日・休業日の判定（キャッシュを使わず DB を見る）
 ├── config/
 │   └── facility.php
+├── resources/views/components/mail/
+│   └── layout.blade.php                # 共通レイアウト <x-mail.layout>（D14）
 └── resources/views/mail/
-    ├── layout.blade.php                # 共通レイアウト（D14）
     ├── reservation-confirmed.blade.php
     ├── reservation-cancelled.blade.php
     └── reservation-cancelled-by-holiday.blade.php
@@ -324,7 +325,8 @@ R1 は予約・キャンセルの Controller それぞれに「キャッシュ�
 | `FacilityChanged`（料金・定休日の変更。`UpdatePrices` / `UpdateRegularHolidays` が dispatch） | `RevalidateFrontendCache` | フロントの `POST /internal/revalidate` を呼び、トップの静的ページを作り直させる（B6） |
 | | `ForgetCalendarCache` | 定休日のキャッシュを消す |
 
-- メール系と `RevalidateFrontendCache` は `ShouldQueue` + `ShouldHandleEventsAfterCommit`。**commit 前に送らない・API の応答を待たせない**（B8）
+- メール系と `RevalidateFrontendCache` は `ShouldQueueAfterCommit`（キューに回し、積むのは commit の後）。**commit 前に送らない・API の応答を待たせない**（B8）
+  - キューに回す Listener には `ShouldHandleEventsAfterCommit` は効かない（キューに回さない Listener 用）。当初は「`ShouldQueue` + `ShouldHandleEventsAfterCommit`」の予定だったが、それではロールバックしてもメールが送られることがテストで分かった（2026-10-02）
 - `ForgetCalendarCache` だけは **キューに回さない**（`ShouldHandleEventsAfterCommit` のみ）。commit 直後に同じリクエストの中で消すので、予約した本人がすぐカレンダーを取り直したとき、確実に新しいデータが返る
 - **broadcast（WebSocket）はしない**（2026-09-29 決定）。他の人の操作は、フロントが定期取得で拾う（[05](05-frontend-design.md#他の人の操作の反映定期取得)）。R1 の `ReservationUpdated` の broadcast と Reverb は使わない
 - `RevalidateFrontendCache` は `Http::withToken(config('services.frontend.revalidate_secret'))->timeout(5)->post(config('services.frontend.internal_url').'/internal/revalidate')`。失敗したらキューのリトライ（3回、間隔を空ける）。それでも失敗したら、時間ベース再検証で最大1時間後に直る
@@ -511,8 +513,8 @@ final class ReservationController extends Controller
 
 ## メール
 
-- Mailable は `ShouldQueue` のまま（R1 と同じ）
-- テンプレートは `resources/views/mail/layout.blade.php`（Blade コンポーネント `<x-mail.layout>`）を共通化し、R1 で3ファイルにコピーされていた CSS を1か所にする（D14）
+- キューに積むのは Listener（`ShouldQueueAfterCommit`）だけにし、Mailable には `ShouldQueue` を付けない。両方に付けるとキューに2回積むことになるため（2026-10-02。当初は「Mailable は `ShouldQueue` のまま（R1 と同じ）」の予定だった）
+- テンプレートは共通のレイアウト（Blade コンポーネント `<x-mail.layout>`。`resources/views/components/mail/layout.blade.php`）にまとめ、R1 で3ファイルにコピーされていた CSS を1か所にする（D14）
 - フッターの施設名・電話番号は `config('facility.*')` から取る
 - 件名の施設名も config から取る
 

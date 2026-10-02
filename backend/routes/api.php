@@ -92,6 +92,12 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'can:admin'])->group(functio
     Route::get('/calendar', Admin\CalendarController::class)
         ->withoutMiddleware('throttle:api')
         ->middleware(['throttle:calendar', 'cache.headers:private;no_cache;etag']);
+
+    // 電話予約の登録
+    Route::post('/reservations', [Admin\ReservationController::class, 'store']);
+
+    // 予約のキャンセル（誰の予約でも。理由は「管理者によるキャンセル」）
+    Route::post('/reservations/{reservation}/cancel', [Admin\ReservationController::class, 'cancel']);
 });
 
 /*

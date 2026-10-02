@@ -28,7 +28,7 @@ use Illuminate\Validation\ValidationException;
  *   4. 料金を計算して INSERT。重なり・1人1日1件は DB の制約に任せる     … 違反は 409
  *   5. ReservationCreated を出す（メール・キャッシュの削除は Listener。6-4）
  *
- * 会員の予約（forMember）と電話予約（手順7の forPhone）で、同じルールを使う（2026-09-29 決定）。
+ * 会員の予約（forMember）と電話予約（forPhone）で、同じルールを使う（2026-09-29 決定）。
  * 違いは「予約者名をどこから取るか」と「会員と結びつけるか」だけ。
  */
 final readonly class CreateReservation
@@ -51,7 +51,22 @@ final readonly class CreateReservation
     }
 
     /**
-     * @param  User|null  $user  予約した会員。電話予約なら null（手順7）
+     * 電話予約（管理者の代理登録。docs/01 の 6.1）。予約者名は管理者が入力した名前で、会員とは結びつけない。
+     *
+     * ルールは会員の予約と同じ（営業時間・長さ・過去・予約期間・定休日・重なり）。
+     * ただし会員と結びつけない（user_id が null）ので、1人1日1件の制限（B3）は対象外になる
+     * （DB の部分ユニーク索引が、user_id のある予約にだけ効くため）。完了メールも送らない（6-4 の Listener）。
+     *
+     * @throws ValidationException ルール違反（422）
+     * @throws ConflictException 時間帯が埋まっていた（409）
+     */
+    public function forPhone(string $bookerName, TimeSlot $slot): Reservation
+    {
+        return $this->create($slot, $bookerName, null);
+    }
+
+    /**
+     * @param  User|null  $user  予約した会員。電話予約なら null
      */
     private function create(TimeSlot $slot, string $bookerName, ?User $user): Reservation
     {

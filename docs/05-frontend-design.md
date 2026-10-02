@@ -478,7 +478,8 @@ export function useCreateReservation() {
 |---|---|
 | カレンダー（`/calendar`, `/admin/calendar`） | **表示している間 60秒ごと**（`refetchInterval`）+ タブに戻ったとき・週を切り替えたとき（前回の取得から60秒以上たっていれば。`staleTime`）+ 自分の操作の成功時（必ず） |
 | マイページの予約一覧 | タブに戻ったとき（既定の `staleTime: 0` なので毎回）+ 自分の操作の成功時（定期取得はしない） |
-| ヘッダーのユーザー・施設情報 | TanStack Query の既定（タブに戻ったときなど） |
+| ヘッダーのユーザー | 取ってから5分間は取り直さない（`staleTime: 5分`）。ログイン・ログアウト・プロフィール更新ではレスポンスで置き換える |
+| 施設情報 | ブラウザでは取り直さない（`staleTime: Infinity`。[施設情報とルール](#ブラウザ側)） |
 
 ```ts
 export function useCalendar(weekStart: string) {

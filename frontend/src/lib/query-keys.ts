@@ -14,4 +14,11 @@ export const queryKeys = {
   user: ["user"] as const,
   /** 施設情報（GET /api/facility）。トップではサーバーで取った値を入れて、ブラウザでは取り直さない */
   facility: ["facility"] as const,
+  /** 公開のカレンダー（GET /api/calendar） */
+  calendar: {
+    /** カレンダーの全部の週。予約・キャンセルの後に、まとめて取り直させるときに使う（手順6） */
+    all: ["calendar"] as const,
+    /** 1週間分。weekStart はその週の月曜日（"2026-10-05"） */
+    week: (weekStart: string) => ["calendar", weekStart] as const,
+  },
 };

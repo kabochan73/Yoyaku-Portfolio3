@@ -42,8 +42,54 @@ export const registerSchema = z
     path: ["password_confirmation"],
   });
 
+/**
+ * プロフィールの更新（backend の UpdateProfileRequest と同じ決まり。docs/08 の 5.4）。
+ *
+ * - 名前・メールアドレスは必須（会員登録と同じ決まり）
+ * - 新しいパスワードは任意。入れたときだけ、8文字以上・確認用と一致・現在のパスワードが必須
+ * 現在のパスワードが合っているかはサーバーでしか分からない（違えば current_password の欄のエラーで返る）
+ */
+export const profileSchema = z
+  .object({
+    name: registerSchema.shape.name,
+    email,
+    current_password: z.string(),
+    password: z
+      .string()
+      // 空（変えない）か、8文字以上
+      .refine(
+        (value) => value === "" || value.length >= 8,
+        "パスワードは8文字以上で入力してください。",
+      ),
+    password_confirmation: z.string(),
+  })
+  .superRefine((values, context) => {
+    // 新しいパスワードを入れていなければ、ほかは調べない
+    if (values.password === "") {
+      return;
+    }
+    if (values.password !== values.password_confirmation) {
+      context.addIssue({
+        code: "custom",
+        message: "パスワードが確認用と一致しません。",
+        path: ["password_confirmation"],
+      });
+    }
+    if (values.current_password === "") {
+      context.addIssue({
+        code: "custom",
+        message:
+          "パスワードを変更するときは、現在のパスワードも入力してください。",
+        path: ["current_password"],
+      });
+    }
+  });
+
 /** ログインのフォームの値 */
 export type LoginValues = z.infer<typeof loginSchema>;
 
 /** 会員登録のフォームの値 */
 export type RegisterValues = z.infer<typeof registerSchema>;
+
+/** プロフィールのフォームの値 */
+export type ProfileValues = z.infer<typeof profileSchema>;

@@ -17,6 +17,8 @@
     "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch"
   },
   "dependencies": {
+    "axios": "^1.20.0",
+    "client-only": "^0.0.1",
     "next": "16.3.6",
     "react": "19.2.8",
     "react-dom": "19.2.8"

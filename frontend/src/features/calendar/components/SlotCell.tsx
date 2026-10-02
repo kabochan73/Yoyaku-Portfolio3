@@ -1,5 +1,5 @@
 import { formatHourRange, formatMonthDayJa } from "@/lib/format";
-import type { SlotStatus } from "../types";
+import type { GridSlotStatus } from "../types";
 
 /*
  * カレンダーの1つの枠（docs/08 の 3.2）。
@@ -26,25 +26,41 @@ type Props = {
   date: string;
   hour: number;
   /** 枠の状態。受付外の日など、枠が無いときは null */
-  status: SlotStatus | null;
+  status: GridSlotStatus | null;
   selectionState: SlotSelectionState;
   onClick: () => void;
+  /** 予約済みの枠に出す名前（管理者用。予約者名）。無ければ「予約済」 */
+  bookedLabel?: string;
+  /** 予約済みの枠を押せるようにするか（管理者用。予約の詳細を開く） */
+  bookedClickable?: boolean;
 };
+
+/**
+ * スマホでは予約者名を先頭2文字 +「…」にする（docs/08 の 9）。
+ * 電話予約の印「☎」は残し、名前の部分だけを縮める。例: "☎ 電話 佐藤" → "☎電話…"、"山田太郎" → "山田…"
+ */
+function shortName(label: string): string {
+  const isPhone = label.startsWith("☎");
+  const name = (isPhone ? label.slice(1) : label).trim();
+  const short = name.length > 2 ? `${name.slice(0, 2)}…` : name;
+  return isPhone ? `☎${short}` : short;
+}
 
 /** 見た目と文言 */
 function appearance(
-  status: SlotStatus | null,
+  status: GridSlotStatus | null,
   selectionState: SlotSelectionState,
+  bookedLabel: string | undefined,
 ): { label: string; mobileLabel: string; className: string } {
   if (status === "booked") {
     return {
-      label: "予約済",
-      mobileLabel: "✕",
+      label: bookedLabel ?? "予約済",
+      mobileLabel: bookedLabel ? shortName(bookedLabel) : "✕",
       className: "bg-red-50 text-red-400",
     };
   }
   if (status !== "available") {
-    // 過去の枠（past）・受付外の日（null）
+    // 過去の枠（past）・受付外の日（closed・null）
     return {
       label: "－",
       mobileLabel: "－",
@@ -87,18 +103,25 @@ export function SlotCell({
   status,
   selectionState,
   onClick,
+  bookedLabel,
+  bookedClickable = false,
 }: Props) {
-  const { label, mobileLabel, className } = appearance(status, selectionState);
-  const clickable = status === "available";
+  const { label, mobileLabel, className } = appearance(
+    status,
+    selectionState,
+    bookedLabel,
+  );
+  const clickable =
+    status === "available" || (status === "booked" && bookedClickable);
 
-  // 画面読み上げ用の名前。例: "10月6日（火）12:00 〜 13:00 空き"
-  const accessibleName = `${formatMonthDayJa(date)}${formatHourRange(hour, hour + 1)} ${
+  // 画面読み上げ用の名前。例: "10月6日（火）12:00 〜 13:00 空き"、管理者用は "… 予約済み 山田太郎"
+  const statusText =
     status === "available"
       ? "空き"
       : status === "booked"
-        ? "予約済み"
-        : "受付外"
-  }`;
+        ? `予約済み${bookedLabel ? ` ${bookedLabel}` : ""}`
+        : "受付外";
+  const accessibleName = `${formatMonthDayJa(date)}${formatHourRange(hour, hour + 1)} ${statusText}`;
 
   return (
     <td className="px-1 py-1.5 text-center sm:px-1.5">

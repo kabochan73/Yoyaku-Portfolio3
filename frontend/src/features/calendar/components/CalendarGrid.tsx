@@ -11,6 +11,7 @@ import {
   type LengthRules,
   type Selection,
 } from "../selection";
+import type { ClosedReason } from "../types";
 import { SlotCell, type SlotSelectionState } from "./SlotCell";
 
 /*
@@ -40,6 +41,23 @@ type Props = {
   /** 週の切り替え中（前の週の枠を薄く出す） */
   dimmed: boolean;
   onSlotClick: (date: string, hour: number) => void;
+  /**
+   * 以下は管理者用のカレンダー（手順7）だけで使う。会員用では渡さない（表示は変わらない）。
+   * - getBookedLabel … 予約済みの枠に出す名前（予約者名）
+   * - onBookedClick  … 予約済みの枠を押したとき（予約の詳細を開く）
+   * - closedReasons  … 日ごとの受付外の理由。見出しに「定休日」などを小さく出す（R1 は「－」だけで理由が分からなかった）
+   */
+  getBookedLabel?: (date: string, hour: number) => string | undefined;
+  onBookedClick?: (date: string, hour: number) => void;
+  closedReasons?: Record<string, ClosedReason | null>;
+};
+
+/** 見出しに出す受付外の理由（過去の日には出さない） */
+const CLOSED_REASON_LABELS: Record<ClosedReason, string | null> = {
+  past: null,
+  out_of_range: "受付外",
+  regular_holiday: "定休日",
+  holiday: "休業日",
 };
 
 /** 見出しの曜日の色。土曜は青、日曜は赤 */
@@ -90,6 +108,9 @@ export function CalendarGrid({
   loading,
   dimmed,
   onSlotClick,
+  getBookedLabel,
+  onBookedClick,
+  closedReasons,
 }: Props) {
   // 週が決まっていなければ、日付の代わりに null を7つ並べる（見出し・枠をスケルトンにする）
   const days: (string | null)[] = Array.from({ length: 7 }, (_, i) =>
@@ -143,6 +164,7 @@ export function CalendarGrid({
                     {Number(date.slice(8))}
                     {isToday && <span className="sr-only">（今日）</span>}
                   </div>
+                  <ClosedReasonLabel reason={closedReasons?.[date]} />
                 </th>
               );
             })}
@@ -181,7 +203,14 @@ export function CalendarGrid({
                       getStatus,
                       rules,
                     )}
-                    onClick={() => onSlotClick(date, hour)}
+                    onClick={() =>
+                      // 予約済みの枠は、管理者用のときだけ押せる（予約の詳細を開く）
+                      getStatus(date, hour) === "booked"
+                        ? onBookedClick?.(date, hour)
+                        : onSlotClick(date, hour)
+                    }
+                    bookedLabel={getBookedLabel?.(date, hour)}
+                    bookedClickable={onBookedClick !== undefined}
                   />
                 ),
               )}
@@ -190,5 +219,20 @@ export function CalendarGrid({
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** 見出しの日付の下に出す、受付外の理由（管理者用） */
+function ClosedReasonLabel({
+  reason,
+}: {
+  reason: ClosedReason | null | undefined;
+}) {
+  const label = reason ? CLOSED_REASON_LABELS[reason] : null;
+  if (!label) {
+    return null;
+  }
+  return (
+    <div className="mt-0.5 text-[10px] font-normal text-zinc-500">{label}</div>
   );
 }

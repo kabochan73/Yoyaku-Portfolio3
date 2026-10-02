@@ -76,3 +76,50 @@ it("選び終わった範囲の枠は「選択中」", () => {
   expect(screen.getByText("選択中")).toBeInTheDocument();
   expect(screen.getByRole("button")).toHaveAttribute("aria-pressed", "true");
 });
+
+describe("管理者用の表示（bookedLabel・bookedClickable）", () => {
+  function renderAdminSlot(
+    status: "booked" | "closed",
+    bookedLabel?: string,
+    onClick = jest.fn(),
+  ) {
+    render(
+      <table>
+        <tbody>
+          <tr>
+            <SlotCell
+              date="2026-10-06"
+              hour={12}
+              status={status}
+              selectionState="none"
+              onClick={onClick}
+              bookedLabel={bookedLabel}
+              bookedClickable
+            />
+          </tr>
+        </tbody>
+      </table>,
+    );
+    return { onClick };
+  }
+
+  it("予約済みの枠に予約者名を出し（スマホは先頭2文字 +「…」）、押せる", async () => {
+    const { onClick } = renderAdminSlot("booked", "☎ 電話 佐藤");
+
+    const button = screen.getByRole("button", {
+      name: "10月6日（火）12:00 〜 13:00 予約済み ☎ 電話 佐藤",
+    });
+    expect(screen.getByText("☎ 電話 佐藤")).toBeInTheDocument();
+    expect(screen.getByText("☎電話…")).toBeInTheDocument();
+
+    await userEvent.click(button);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("受付外の日の予約が無い枠（closed）は「－」で押せない", () => {
+    renderAdminSlot("closed");
+
+    expect(screen.getByRole("button")).toBeDisabled();
+    expect(screen.getAllByText("－")).toHaveLength(2);
+  });
+});

@@ -1,5 +1,5 @@
 import type { BookingRules } from "@/features/facility/types";
-import type { SlotStatus } from "./types";
+import type { GridSlotStatus } from "./types";
 
 /*
  * カレンダーで枠を選ぶルール（docs/05 の「枠選択のロジックを純粋関数にする」、docs/08 の 3.2〜3.4）。
@@ -29,8 +29,12 @@ export type SlotRef = { date: string; hour: number };
 /**
  * 枠の状態を返す関数。枠が無いとき（受付外の日・営業時間の外）は null。
  * カレンダーの部品が、表示中のデータから作って渡す。
+ * 選べるのは available の枠だけ（booked・past・closed・null は選べない）。
  */
-export type GetSlotStatus = (date: string, hour: number) => SlotStatus | null;
+export type GetSlotStatus = (
+  date: string,
+  hour: number,
+) => GridSlotStatus | null;
 
 /** 選べる長さのルール（施設情報の rules。useFacility() から渡す。D1） */
 export type LengthRules = Pick<BookingRules, "min_hours" | "max_hours">;

@@ -1,6 +1,11 @@
 import { api, getCsrfCookie } from "@/lib/api-client";
 import { ApiError } from "@/lib/api-error";
-import type { LoginInput, RegisterInput, User } from "./types";
+import type {
+  LoginInput,
+  RegisterInput,
+  UpdateProfileInput,
+  User,
+} from "./types";
 
 /*
  * 認証の API を呼ぶ関数（docs/05 の「features/<機能>/api.ts」）。
@@ -55,4 +60,14 @@ export async function register(input: RegisterInput): Promise<User> {
 /** ログアウト（POST /api/logout） */
 export async function logout(): Promise<void> {
   await api.post("/logout");
+}
+
+/**
+ * プロフィールを更新する（PUT /api/user/profile）。成功したら更新後のユーザーを返す。
+ * 新しいパスワードを変えないときは、パスワードの欄を空文字で送る（サーバーは空を「変えない」として扱う）。
+ * 失敗: 422（項目ごと。現在のパスワード違いは current_password の欄）
+ */
+export async function updateProfile(input: UpdateProfileInput): Promise<User> {
+  const response = await api.put<DataResponse<User>>("/user/profile", input);
+  return response.data.data;
 }

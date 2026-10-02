@@ -1,6 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { ApiError } from "@/lib/api-error";
 import { queryKeys } from "@/lib/query-keys";
-import { fetchCurrentUser, login, logout, register } from "./api";
+import {
+  fetchCurrentUser,
+  login,
+  logout,
+  register,
+  updateProfile,
+} from "./api";
 import type { User } from "./types";
 
 /*
@@ -71,4 +80,39 @@ export function useLogout() {
       queryClient.setQueryData(queryKeys.user, null);
     },
   });
+}
+
+/**
+ * プロフィールの更新。成功したら、返ってきたユーザーでログイン中のユーザーを置き換える
+ * （ヘッダーなど、ユーザーを使っている所の表示も変わる。docs/08 の 5.4）。
+ */
+export function useUpdateProfile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updateProfile,
+    onSuccess: (user: User) => {
+      queryClient.setQueryData(queryKeys.user, user);
+    },
+  });
+}
+
+/**
+ * ログインが必要なページで、API が 401（セッション切れ）を返したら、ログイン画面へ移す（docs/05 の「セッション切れ」）。
+ *
+ * ログインしたまま長く開いていてセッションが切れると、ページの取得・送信が 401 になる。
+ * ヘッダーの表示は app/providers.tsx が直す（ログイン中のユーザーを null にする）。ここでは画面を移す。
+ *
+ * ログインが必要なページの部品（マイページの予約一覧など）で、取得や送信のエラーを渡して使う:
+ *   useRedirectToLoginOnUnauthorized(query.error);
+ */
+export function useRedirectToLoginOnUnauthorized(error: Error | null) {
+  const router = useRouter();
+  const unauthorized = error instanceof ApiError && error.status === 401;
+
+  useEffect(() => {
+    if (unauthorized) {
+      router.replace("/login");
+    }
+  }, [unauthorized, router]);
 }

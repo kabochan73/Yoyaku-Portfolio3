@@ -26,3 +26,12 @@ export type RegisterInput = {
   password: string;
   password_confirmation: string;
 };
+
+/** プロフィールの更新（PUT /api/user/profile）。パスワードを変えないときは空文字 */
+export type UpdateProfileInput = {
+  name: string;
+  email: string;
+  current_password: string;
+  password: string;
+  password_confirmation: string;
+};

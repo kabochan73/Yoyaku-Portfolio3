@@ -1,4 +1,4 @@
-import { addDays, mondayOf, todayInTokyo } from "@/lib/date";
+import { addDays, dayOfWeek, mondayOf, todayInTokyo } from "@/lib/date";
 
 /*
  * フロント版の B1: 端末のタイムゾーンに関係なく、日本の日付を返すこと。
@@ -80,5 +80,13 @@ describe("mondayOf", () => {
   it("月・年をまたぐ週", () => {
     expect(mondayOf("2026-11-01")).toBe("2026-10-26"); // 日曜
     expect(mondayOf("2027-01-01")).toBe("2026-12-28"); // 金曜
+  });
+});
+
+describe("dayOfWeek", () => {
+  it("0 = 日曜 … 6 = 土曜（端末がロサンゼルスでも日本と同じ曜日）", () => {
+    expect(dayOfWeek("2026-10-04")).toBe(0);
+    expect(dayOfWeek("2026-10-06")).toBe(2);
+    expect(dayOfWeek("2026-10-10")).toBe(6);
   });
 });

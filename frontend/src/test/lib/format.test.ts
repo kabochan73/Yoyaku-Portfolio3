@@ -1,5 +1,9 @@
 import {
+  formatDateJa,
   formatDayOfWeek,
+  formatDayOfWeekShort,
+  formatMonthDayJa,
+  formatWeekRange,
   formatHour,
   formatHourRange,
   formatYen,
@@ -30,4 +34,19 @@ it("formatDayOfWeek: 0 = 日曜 … 6 = 土曜", () => {
   expect(formatDayOfWeek(0)).toBe("日曜日");
   expect(formatDayOfWeek(1)).toBe("月曜日");
   expect(formatDayOfWeek(6)).toBe("土曜日");
+});
+
+it("formatDateJa: 年月日と曜日（端末のタイムゾーンに左右されない）", () => {
+  expect(formatDateJa("2026-10-06")).toBe("2026年10月6日（火）");
+  expect(formatDateJa("2027-01-01")).toBe("2027年1月1日（金）");
+});
+
+it("formatMonthDayJa・formatDayOfWeekShort: 年なしの日付と、曜日の1文字", () => {
+  expect(formatMonthDayJa("2026-10-06")).toBe("10月6日（火）");
+  expect(formatDayOfWeekShort("2026-10-11")).toBe("日");
+});
+
+it("formatWeekRange: 月曜から日曜まで。月をまたぐ週も", () => {
+  expect(formatWeekRange("2026-10-05")).toBe("10/5 〜 10/11");
+  expect(formatWeekRange("2026-10-26")).toBe("10/26 〜 11/1");
 });

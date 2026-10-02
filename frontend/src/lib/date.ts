@@ -79,7 +79,17 @@ export function addDays(date: string, days: number): string {
  * mondayOf("2026-10-11"); // 日曜 → "2026-10-05"
  */
 export function mondayOf(date: string): string {
-  // getUTCDay(): 0 = 日曜, 1 = 月曜 … 6 = 土曜。月曜から何日たっているか（月曜 0 … 日曜 6）に直す
-  const daysSinceMonday = (parseDate(date).getUTCDay() + 6) % 7;
+  // dayOfWeek(): 0 = 日曜, 1 = 月曜 … 6 = 土曜。月曜から何日たっているか（月曜 0 … 日曜 6）に直す
+  const daysSinceMonday = (dayOfWeek(date) + 6) % 7;
   return addDays(date, -daysSinceMonday);
+}
+
+/**
+ * 曜日の番号（0 = 日曜 … 6 = 土曜）。端末のタイムゾーンに左右されない。
+ *
+ * @example
+ * dayOfWeek("2026-10-06"); // 火曜 → 2
+ */
+export function dayOfWeek(date: string): number {
+  return parseDate(date).getUTCDay();
 }

@@ -37,4 +37,17 @@ return [
         ],
     ],
 
+    /*
+    | フロント（Next.js）の作り直しの受け口（docs/04 の「副作用」、B6）。
+    | 料金・定休日を変えたとき、RevalidateFrontendCache が internal_url の /internal/revalidate を
+    | 合言葉（revalidate_secret）付きで呼び、トップの静的ページを作り直させる。
+    | - internal_url: バックエンドから届くフロントの URL。Docker では http://frontend:3000、
+    |   本番は Railway のプライベートネットワーク上の frontend（docs/07）
+    | - revalidate_secret: フロントの REVALIDATE_SECRET と同じ値
+    */
+    'frontend' => [
+        'internal_url' => env('FRONTEND_INTERNAL_URL'),
+        'revalidate_secret' => env('FRONTEND_REVALIDATE_SECRET'),
+    ],
+
 ];

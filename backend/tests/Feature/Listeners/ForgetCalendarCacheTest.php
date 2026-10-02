@@ -3,9 +3,11 @@
 declare(strict_types=1);
 
 use App\Enums\PriceType;
+use App\Events\HolidayChanged;
 use App\Events\ReservationCancelled;
 use App\Events\ReservationCreated;
 use App\Listeners\ForgetCalendarCache;
+use App\Models\Holiday;
 use App\Models\Price;
 use App\Models\Reservation;
 use App\Models\User;
@@ -41,6 +43,7 @@ it('予約・キャンセルのイベントを受けるよう登録されてい�
 
     Event::assertListening(ReservationCreated::class, ForgetCalendarCache::class);
     Event::assertListening(ReservationCancelled::class, ForgetCalendarCache::class);
+    Event::assertListening(HolidayChanged::class, ForgetCalendarCache::class);
 });
 
 it('予約した直後のカレンダーで、その枠が予約済みになる（60秒待たない）', function () {
@@ -76,4 +79,25 @@ it('消すのはその日のキャッシュだけで、ほかの日は残す', f
 
     expect(Cache::has('calendar:day:2026-10-07'))->toBeFalse()
         ->and(Cache::has('calendar:day:2026-10-08'))->toBeTrue();
+});
+
+it('臨時休業日を登録した直後のカレンダーで、その日が休業日になり、解除すると戻る', function () {
+    $admin = User::factory()->admin()->create();
+    // 10/7・10/8 の事実をキャッシュに入れる
+    expect(slotAtNoon())->toBe('available');
+
+    nextRequest();
+    $this->actingAs($admin)->postJson('/api/admin/holidays', ['date' => '2026-10-07'])->assertCreated();
+
+    nextRequest();
+    $this->getJson('/api/calendar?from=2026-10-07&to=2026-10-08')
+        ->assertJsonPath('data.0.closed_reason', 'holiday');
+    // ほかの日（10/8）のキャッシュは残す
+    expect(Cache::has('calendar:day:2026-10-08'))->toBeTrue();
+
+    nextRequest();
+    $holiday = Holiday::query()->sole();
+    $this->actingAs($admin)->deleteJson("/api/admin/holidays/{$holiday->id}")->assertNoContent();
+
+    expect(slotAtNoon())->toBe('available');
 });

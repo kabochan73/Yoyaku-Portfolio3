@@ -107,6 +107,9 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'can:admin'])->group(functio
     Route::get('/holidays', [Admin\HolidayController::class, 'index']);
     Route::post('/holidays', [Admin\HolidayController::class, 'store']);
     Route::delete('/holidays/{holiday}', [Admin\HolidayController::class, 'destroy']);
+
+    // 会員検索
+    Route::get('/users', [Admin\UserController::class, 'index']);
 });
 
 /*

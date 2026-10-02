@@ -72,6 +72,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // 予約する
     Route::post('/reservations', [ReservationController::class, 'store']);
+
+    // 自分の予約をキャンセルする（行は消さず、状態を変える）
+    Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel']);
 });
 
 /*

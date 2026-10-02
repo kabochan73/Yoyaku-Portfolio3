@@ -4,18 +4,21 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Actions\Reservations\CancelReservation;
 use App\Actions\Reservations\CreateReservation;
+use App\Enums\CancellationReason;
 use App\Http\Requests\StoreReservationRequest;
 use App\Http\Resources\ReservationResource;
+use App\Models\Reservation;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * 会員の予約に関する API（docs/03 の「会員」、docs/04 の「Controller の例」）。
  *
- * キャンセル（6-3）も、ここに足す。
  * Controller は入力を受け取って Action を呼び、Resource で返すだけにする（ルールは Action と BookingRules に置く）。
  */
 final class ReservationController extends Controller
@@ -51,5 +54,24 @@ final class ReservationController extends Controller
         $reservation = $createReservation->forMember($user, $request->timeSlot());
 
         return ReservationResource::make($reservation)->response()->setStatusCode(201);
+    }
+
+    /**
+     * POST /api/reservations/{reservation}/cancel — 自分の予約をキャンセルする。
+     *
+     * - 成功: 200 + ReservationResource（status: "cancelled"）
+     * - 他人の予約: 403（ReservationPolicy。管理者でもこのルートでは 403）
+     * - キャンセル済み・開始済み: 409 reservation_not_cancellable（CancelReservation）
+     * - 無い予約: 404（{reservation} を Laravel が id で探し、無ければ 404 にする）
+     *
+     * R1 は DELETE /reservations/{id} だった。行を消すのではなく状態を変える操作なので、POST .../cancel にした（docs/03）。
+     */
+    public function cancel(Reservation $reservation, CancelReservation $cancelReservation): ReservationResource
+    {
+        Gate::authorize('cancel', $reservation);
+
+        return ReservationResource::make(
+            $cancelReservation->handle($reservation, CancellationReason::ByMember),
+        );
     }
 }

@@ -12,8 +12,12 @@ use App\Enums\SlotStatus;
  */
 final readonly class CalendarSlot
 {
+    /**
+     * @param  int|null  $reservationId  予約済みの枠に入っている予約の id。管理者用のカレンダーだけで使う（公開用では返さない）
+     */
     public function __construct(
         public int $hour,
         public SlotStatus $status,
+        public ?int $reservationId = null,
     ) {}
 }

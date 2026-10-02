@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Booking\BookingRules;
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -32,6 +34,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureRateLimiting();
+
+        // 管理者だけが使える操作（docs/04 の「認可」）。
+        // routes/api.php の /admin のまとまりに can:admin を付けて使う。管理者でなければ 403 forbidden。
+        // R1 は独自のミドルウェア（AdminMiddleware）を書いていたが、Laravel 標準の Gate に置き換えた
+        Gate::define('admin', fn (User $user): bool => $user->isAdmin());
     }
 
     /**

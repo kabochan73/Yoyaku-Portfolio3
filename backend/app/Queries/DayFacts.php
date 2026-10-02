@@ -36,13 +36,23 @@ final readonly class DayFacts
      */
     public function isBooked(int $hour): bool
     {
+        return $this->reservationAt($hour) !== null;
+    }
+
+    /**
+     * その時の枠に入っている予約。無ければ null。管理者用のカレンダーで、枠に予約の id を付けるのに使う。
+     *
+     * @return ReservationFact|null
+     */
+    public function reservationAt(int $hour): ?array
+    {
         foreach ($this->reservations as $reservation) {
             if ($reservation['start_hour'] <= $hour && $hour < $reservation['end_hour']) {
-                return true;
+                return $reservation;
             }
         }
 
-        return false;
+        return null;
     }
 
     /**

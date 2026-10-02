@@ -157,7 +157,7 @@ E2E テストを入れない代わりに、デプロイ後に次を手で確認�
 3. `config/facility.php`・Enum・モデル・Factory・シーダー・`Booking/`（`DayClosure` を含む）・`ClosedDays`（Unit / Feature テスト）（**完了 2026-10-01**）
 4. エラー形式（`bootstrap/app.php`）・認証 API と、フロントの `api-client`・共通 UI 部品（`Dialog`, `Button`, `Skeleton`, `ErrorState` など）・`getCurrentUser`・ログイン / 登録画面（**完了 2026-10-02**）
 5. `/facility`・`/calendar`（`CalendarFacts` の Redis キャッシュも含む）とトップページ（定期取得も含む）。トップを静的ページにし、ビルド用のスタブサーバーもここで作る（**完了 2026-10-02**）
-6. 予約・キャンセル（Action・Event・メール）とマイページ
+6. 予約・キャンセル（Action・Event・メール）とマイページ（**完了 2026-10-02**）
 7. 管理画面（予約カレンダー → 設定3種 → ユーザー検索）
 8. CI（GitHub Actions。backend: Pint・Larastan・Pest、frontend: ESLint・Prettier・tsc・Jest・ビルド・トップが静的かの確認）
 9. 本番デプロイと手動確認

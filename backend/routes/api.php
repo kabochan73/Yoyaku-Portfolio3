@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\SessionController;
+use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
@@ -26,6 +27,16 @@ use Illuminate\Support\Facades\Route;
 
 // 施設情報・予約のルール・料金・定休日（トップページ・フッター・カレンダーが使う）
 Route::get('/facility', FacilityController::class);
+
+// 週ごとの空き状況（誰が呼んでも同じ内容。docs/03）
+// - throttle:calendar … 300回/分。画面は60秒ごとに取り直すので、ふつうの API（60回/分）より緩くする。
+//                       すべての API に付いている throttle:api（60回/分）は外す（付いたままだと、そちらで止まる）
+// - cache.headers     … 中身から ETag を作り、前回と同じなら本文なしの 304 を返す（Laravel 標準）。
+//                       private: 途中のキャッシュ（CDN など）には保存させない
+//                       no_cache: ブラウザは保存してよいが、使う前に毎回サーバーに確かめる（古い空き状況を使わせない）
+Route::get('/calendar', CalendarController::class)
+    ->withoutMiddleware('throttle:api')
+    ->middleware(['throttle:calendar', 'cache.headers:private;no_cache;etag']);
 
 /*
 |--------------------------------------------------------------------------

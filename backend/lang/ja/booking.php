@@ -19,4 +19,7 @@ return [
     'past_date' => '過去の日付は予約できません。',
     'out_of_range' => ':dateより先は予約できません。',
     'already_started' => '開始時刻を過ぎています。',
+
+    // カレンダーの期間（App\Http\Requests\CalendarRequest）
+    'calendar_range_too_long' => '期間は:days日以内で指定してください。',
 ];

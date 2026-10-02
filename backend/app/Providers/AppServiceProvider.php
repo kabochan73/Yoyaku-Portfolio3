@@ -54,7 +54,7 @@ class AppServiceProvider extends ServiceProvider
             ->by(mb_strtolower((string) $request->input('email')).'|'.$request->ip()));
 
         // カレンダー: 300回/分。画面を開いている間 60秒ごとに取り直すので、同じ IP を大勢で共有していると
-        // 60回/分では数十人で制限に当たるため緩くする（2026-09-29 決定。docs/03）。手順5で付ける
+        // 60回/分では数十人で制限に当たるため緩くする（2026-09-29 決定。docs/03）。routes/api.php の /calendar に付けている
         RateLimiter::for('calendar', fn (Request $request): Limit => Limit::perMinute(300)
             ->by($request->user()?->id ?: $request->ip()));
     }

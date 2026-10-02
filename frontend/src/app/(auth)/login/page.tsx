@@ -7,9 +7,9 @@ import { LoginForm } from "@/features/auth/components/LoginForm";
  * ページは Server Component のまま、動きのあるフォームだけを LoginForm（Client Component）にする。
  */
 
-// TODO(手順5): 施設名は getFacility() から取る（D14、docs/08 の 8）
+// ルートのレイアウトの template で「ログイン｜（施設名）」になる（docs/08 の 8）
 export const metadata: Metadata = {
-  title: "ログイン｜FUTSAL PARK",
+  title: "ログイン",
 };
 
 export default function LoginPage() {

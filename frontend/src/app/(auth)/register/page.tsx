@@ -7,9 +7,9 @@ import { RegisterForm } from "@/features/auth/components/RegisterForm";
  * ページは Server Component のまま、動きのあるフォームだけを RegisterForm（Client Component）にする。
  */
 
-// TODO(手順5): 施設名は getFacility() から取る（D14、docs/08 の 8）
+// ルートのレイアウトの template で「会員登録｜（施設名）」になる（docs/08 の 8）
 export const metadata: Metadata = {
-  title: "会員登録｜FUTSAL PARK",
+  title: "会員登録",
 };
 
 export default function RegisterPage() {

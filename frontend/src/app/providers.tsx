@@ -1,8 +1,14 @@
 "use client";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  MutationCache,
+  QueryCache,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { ApiError } from "@/lib/api-error";
+import { queryKeys } from "@/lib/query-keys";
 
 /*
  * アプリ全体で使う仕組みをまとめて提供する部品。ルートのレイアウト（app/layout.tsx）で全体を包む。
@@ -15,7 +21,25 @@ import { ApiError } from "@/lib/api-error";
  * TanStack Query の設定を作る。テストでも同じ設定を土台に使う（src/test/render.tsx）。
  */
 export function createQueryClient(): QueryClient {
-  return new QueryClient({
+  /**
+   * 【セッション切れ】（docs/05 の「セッション切れ」）
+   * どの取得・送信でも、401（未ログイン）が返ったら、保存しているログイン中のユーザーを null にする。
+   * ログインしたまま長く開いていてセッションが切れたとき、ヘッダーが「ログイン・新規登録」に変わる。
+   * これが無いと、ヘッダーには「マイページ・ログアウト」が出たままになる。
+   * ログインが必要なページにいたときに、ログイン画面へ移すのは、そのページの部品が行う（マイページ。6-7）。
+   *
+   * GET /api/user の 401 はエラーにせず null を返す（features/auth/api.ts）ので、ここには来ない。
+   */
+  const clearUserOnUnauthorized = (error: Error) => {
+    if (error instanceof ApiError && error.status === 401) {
+      queryClient.setQueryData(queryKeys.user, null);
+    }
+  };
+
+  const queryClient: QueryClient = new QueryClient({
+    // queryCache・mutationCache の onError は、どの取得（useQuery）・送信（useMutation）が失敗しても呼ばれる
+    queryCache: new QueryCache({ onError: clearUserOnUnauthorized }),
+    mutationCache: new MutationCache({ onError: clearUserOnUnauthorized }),
     defaultOptions: {
       queries: {
         /*
@@ -37,6 +61,8 @@ export function createQueryClient(): QueryClient {
       },
     },
   });
+
+  return queryClient;
 }
 
 export function Providers({ children }: { children: ReactNode }) {

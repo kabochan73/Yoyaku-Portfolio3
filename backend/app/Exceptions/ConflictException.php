@@ -15,7 +15,7 @@ use RuntimeException;
  * レスポンスへの変換は ApiExceptionRenderer が行う:
  *   { "message": "...", "code": "slot_taken", ...追加情報 }
  *
- * 具体的な作り方（slot_taken・already_booked_that_day など）は、使う手順6・7で static メソッドとして足す。
+ * 場面ごとの作り方は、下の static メソッド（slotTaken() など）を使う。手順7の休業日の分は、そのときに足す。
  * 想定内の失敗なので、ログには残さない（bootstrap/app.php の dontReport）。
  */
 final class ConflictException extends RuntimeException
@@ -31,5 +31,22 @@ final class ConflictException extends RuntimeException
         public readonly array $extra = [],
     ) {
         parent::__construct($message);
+    }
+
+    /**
+     * 予約しようとした時間帯が、すでに埋まっていた（排他制約 reservations_no_overlap の違反。B2）。
+     * フロントはこれを受けて、カレンダーを取り直す（docs/03）。
+     */
+    public static function slotTaken(): self
+    {
+        return new self('slot_taken', __('booking.slot_taken'));
+    }
+
+    /**
+     * 同じ日に、自分の確定済みの予約がすでにある（部分ユニーク索引 reservations_user_date_confirmed_unique の違反。B3）。
+     */
+    public static function alreadyBookedThatDay(): self
+    {
+        return new self('already_booked_that_day', __('booking.already_booked_that_day'));
     }
 }

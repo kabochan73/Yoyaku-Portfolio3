@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /*
 |--------------------------------------------------------------------------
-| 予約のルールのエラーメッセージ（App\Booking\BookingRules が使う）
+| 予約のルールのエラーメッセージ（BookingRules・CreateReservation・ConflictException などが使う）
 |--------------------------------------------------------------------------
 |
 | :open・:min などの部分には、config/facility.php のルールの値が入る。
@@ -19,6 +19,14 @@ return [
     'past_date' => '過去の日付は予約できません。',
     'out_of_range' => ':dateより先は予約できません。',
     'already_started' => '開始時刻を過ぎています。',
+
+    // 定休日・臨時休業日（App\Actions\Reservations\CreateReservation。項目エラー date）
+    'regular_holiday' => '定休日のため予約できません。',
+    'holiday' => '臨時休業日のため予約できません。',
+
+    // 409（App\Exceptions\ConflictException。docs/08 の 3.6）
+    'slot_taken' => 'その時間帯は先に予約されました。別の時間をお選びください。',
+    'already_booked_that_day' => 'この日はすでにご予約があります（1日1件まで）。',
 
     // カレンダーの期間（App\Http\Requests\CalendarRequest）
     'calendar_range_too_long' => '期間は:days日以内で指定してください。',

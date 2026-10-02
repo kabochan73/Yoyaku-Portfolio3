@@ -25,7 +25,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * - キャンセルしても行は消さず、status を Cancelled にして cancelled_at を入れる
  * - 予約者名（booker_name）と金額（price）は予約時点の値。後で会員の名前や料金が変わっても変えない
  *
- * 予約の振る舞い: timeSlot()・phase()・isCancellable()（6-1）。キャンセルの cancel() は 6-3 で足す。
+ * 予約の振る舞い: timeSlot()・phase()・isCancellable()（6-1）、cancel()（6-3）。
  *
  * 【古い予約の自動削除】
  * 予約日が「管理画面で遡れる範囲（3か月）」より前の予約は、毎日まとめて削除する（docs/01 の「データ保持」）。
@@ -131,6 +131,20 @@ final class Reservation extends Model
     {
         return $this->status === ReservationStatus::Confirmed
             && $this->phase($now) === ReservationPhase::BeforeStart;
+    }
+
+    /**
+     * キャンセル済みにする（行は消さない。docs/01 の C3）。
+     *
+     * 状態とキャンセルした日時を一緒に入れる（DB の CHECK 制約 reservations_cancelled_at_check が、
+     * 「キャンセル済みなら cancelled_at が必ず入っている」ことを守っている）。
+     * キャンセルできるかの判定（isCancellable）とロックは、呼ぶ側の CancelReservation が行う。
+     */
+    public function cancel(CarbonImmutable $now): void
+    {
+        $this->status = ReservationStatus::Cancelled;
+        $this->cancelled_at = $now;
+        $this->save();
     }
 
     /**

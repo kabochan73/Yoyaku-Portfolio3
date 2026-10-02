@@ -24,9 +24,10 @@ return [
     'regular_holiday' => '定休日のため予約できません。',
     'holiday' => '臨時休業日のため予約できません。',
 
-    // 409（App\Exceptions\ConflictException。docs/08 の 3.6）
+    // 409（App\Exceptions\ConflictException。docs/08 の 3.6・5.3）
     'slot_taken' => 'その時間帯は先に予約されました。別の時間をお選びください。',
     'already_booked_that_day' => 'この日はすでにご予約があります（1日1件まで）。',
+    'reservation_not_cancellable' => 'この予約はキャンセルできません（開始済み、またはキャンセル済み）。',
 
     // カレンダーの期間（App\Http\Requests\CalendarRequest）
     'calendar_range_too_long' => '期間は:days日以内で指定してください。',

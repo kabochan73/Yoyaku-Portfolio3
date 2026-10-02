@@ -49,4 +49,13 @@ final class ConflictException extends RuntimeException
     {
         return new self('already_booked_that_day', __('booking.already_booked_that_day'));
     }
+
+    /**
+     * キャンセルできない予約だった（キャンセル済み・開始済み。docs/01 の C2、B4）。
+     * フロントは、ダイアログを開いたままこのメッセージを出し、一覧を取り直す（docs/08 の 5.3）。
+     */
+    public static function reservationNotCancellable(): self
+    {
+        return new self('reservation_not_cancellable', __('booking.reservation_not_cancellable'));
+    }
 }

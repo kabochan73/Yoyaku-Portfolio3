@@ -12,4 +12,6 @@
 export const queryKeys = {
   /** ログイン中のユーザー（未ログインなら null） */
   user: ["user"] as const,
+  /** 施設情報（GET /api/facility）。トップではサーバーで取った値を入れて、ブラウザでは取り直さない */
+  facility: ["facility"] as const,
 };

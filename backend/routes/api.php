@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\SessionController;
+use App\Http\Controllers\FacilityController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +17,15 @@ use Illuminate\Support\Facades\Route;
 | 一覧は docs/03-api.md。すべての API に回数制限 'api' が付いている（bootstrap/app.php）。
 |
 */
+
+/*
+|--------------------------------------------------------------------------
+| 公開（ログインしていなくても使える）
+|--------------------------------------------------------------------------
+*/
+
+// 施設情報・予約のルール・料金・定休日（トップページ・フッター・カレンダーが使う）
+Route::get('/facility', FacilityController::class);
 
 /*
 |--------------------------------------------------------------------------

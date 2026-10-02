@@ -24,4 +24,16 @@ final class RegularHoliday extends Model
             'day_of_week' => 'integer',
         ];
     }
+
+    /**
+     * 定休日の曜日の一覧（小さい順）。定休日が無ければ空の配列。
+     * 例: 月曜と木曜が定休日なら [1, 4]
+     *
+     * @return list<int>
+     */
+    public static function days(): array
+    {
+        /** @var list<int> */
+        return self::query()->orderBy('day_of_week')->pluck('day_of_week')->all();
+    }
 }

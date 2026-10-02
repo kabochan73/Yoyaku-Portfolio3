@@ -26,4 +26,12 @@ export const queryKeys = {
     /** 1週間分。weekStart はその週の月曜日（"2026-10-05"） */
     week: (weekStart: string) => ["calendar", weekStart] as const,
   },
+  /** 管理画面のデータ */
+  admin: {
+    /** 管理者用のカレンダー（GET /api/admin/calendar。予約の詳細つき） */
+    calendar: {
+      all: ["admin", "calendar"] as const,
+      week: (weekStart: string) => ["admin", "calendar", weekStart] as const,
+    },
+  },
 };

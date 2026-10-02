@@ -7,6 +7,12 @@
 export type SlotStatus = "available" | "booked" | "past";
 
 /**
+ * カレンダーの表（CalendarGrid）が扱う枠の状態。公開用の3つに、closed（受付外の日の、予約が無い枠）を足したもの。
+ * closed は管理者用のカレンダー（/api/admin/calendar）だけが返す（B11）。公開用の API は返さない
+ */
+export type GridSlotStatus = SlotStatus | "closed";
+
+/**
  * その日を受け付けない理由。受付中なら null。
  * past = 過去の日、out_of_range = 予約できる期間より先、regular_holiday = 定休日、holiday = 臨時休業日
  */

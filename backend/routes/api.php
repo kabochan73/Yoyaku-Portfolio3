@@ -102,6 +102,11 @@ Route::prefix('admin')->middleware(['auth:sanctum', 'can:admin'])->group(functio
     // 施設の設定（料金・定休日）。返すのは更新後の施設情報（/facility と同じ形）
     Route::put('/prices', [Admin\SettingsController::class, 'updatePrices']);
     Route::put('/regular-holidays', [Admin\SettingsController::class, 'updateRegularHolidays']);
+
+    // 臨時休業日（一覧・登録・解除）
+    Route::get('/holidays', [Admin\HolidayController::class, 'index']);
+    Route::post('/holidays', [Admin\HolidayController::class, 'store']);
+    Route::delete('/holidays/{holiday}', [Admin\HolidayController::class, 'destroy']);
 });
 
 /*

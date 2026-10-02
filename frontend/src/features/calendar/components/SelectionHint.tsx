@@ -38,7 +38,7 @@ export function selectionHintText(
         ? `終了時刻の枠を選んでください。${formatHour(selection.hour)} から${min}〜${max}時間まで選べます`
         : `この時間からは${min}時間以上続けて空いていません。別の枠を選んでください`;
     case "complete":
-      // 手順6では、選び終わったら確認ダイアログを開く。それまでは選んだ内容をここに出す
+      // 選び終わると確認ダイアログが開く。その後ろで、選んだ内容をここにも出しておく
       return `${formatDateJa(selection.date)} ${formatHourRange(selection.startHour, selection.endHour)}（${
         selection.endHour - selection.startHour
       }時間）を選択中`;

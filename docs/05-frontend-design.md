@@ -38,7 +38,7 @@ frontend/src/
 │   ├── auth/
 │   │   ├── api.ts                  # login, register, logout, fetchUser, updateProfile
 │   │   ├── schemas.ts              # zod
-│   │   ├── hooks.ts                # useUser, useLogin, useRegister, useLogout, useUpdateProfile
+│   │   ├── hooks.ts                # useCurrentUser, useLogin, useRegister, useLogout, useUpdateProfile
 │   │   ├── server.ts               # getCurrentUser()（Server Component 用）
 │   │   └── components/             # LoginForm, RegisterForm, ProfileForm, UserProvider
 │   ├── facility/
@@ -63,6 +63,7 @@ frontend/src/
 │       ├── holidays/
 │       └── users/
 ├── components/ui/                  # 機能を知らない部品: Button, Dialog, Accordion, FormField, Skeleton, Alert, ErrorState
+├── components/layout/              # 全ページ共通の枠: Header, HeaderUserMenu, Footer
 ├── lib/
 │   ├── api-client.ts               # axios インスタンス + ApiError への変換
 │   ├── server-fetch.ts             # Server Component からバックエンドを呼ぶ（Cookie 転送）
@@ -76,7 +77,7 @@ frontend/src/
 ```
 
 - 機能どうしの依存は `admin → calendar / reservations → facility / auth` の一方向。逆向きの import はしない
-- `components/ui` は機能のコードを import しない
+- `components/ui` は機能のコードを import しない（`components/layout` は import してよい。ヘッダーがログイン状態を使うため）
 
 ## API 呼び出し層
 
@@ -218,11 +219,11 @@ R1 はマイページ・管理画面・ログイン画面のページ全体と `
 | `app/layout.tsx` | SC | `<html>` と骨組みだけ。Cookie を読まない（トップを静的に保つ） |
 | `app/providers.tsx` | CC | QueryClient を持つ |
 | `Header` | SC | ロゴ・リンクなど動かない部分 |
-| └ `HeaderUserMenu` | CC | `useUser()` でログイン状態を取り、ログアウトを実行する。R1 は `Header` 全体が CC だった |
+| └ `HeaderUserMenu` | CC | `useCurrentUser()` でログイン状態を取り、ログアウトを実行する。R1 は `Header` 全体が CC だった |
 | `app/(site)/layout.tsx` | SC | `getFacility()` で Footer 用の施設情報を取る |
 | `Footer` | SC | 施設情報を表示するだけ |
 | `app/(auth)/layout.tsx`, `mypage/layout.tsx`, `admin/layout.tsx` | SC | `getCurrentUser()` で判定して `redirect()` |
-| `UserProvider` | CC | サーバーで取ったユーザーを `useUser()` の初期値にする |
+| `UserProvider` | CC | サーバーで取ったユーザーを `useCurrentUser()` の初期値にする |
 | `app/error.tsx`, `app/global-error.tsx` | CC | Next.js の決まりで CC（`reset()` を受け取る） |
 | `app/not-found.tsx` | SC | |
 
@@ -281,7 +282,7 @@ R1 はマイページ・管理画面・ログイン画面のページ全体と `
 
 ### ヘッダーのログイン表示
 
-ルートレイアウトで Cookie を読まないので、ヘッダーのユーザー情報は **ブラウザで取る**（R1 と同じ `useUser()` → `GET /api/user`）。
+ルートレイアウトで Cookie を読まないので、ヘッダーのユーザー情報は **ブラウザで取る**（`useCurrentUser()` → `GET /api/user`。R1 の `useUser()` と同じ）。
 
 - 読み込み中はボタンと同じ大きさの枠（スケルトン）を出し、表示されたときにレイアウトがずれないようにする
   - R1 は読み込み中に何も出さず（`isLoading ? null : ...`）、ボタンが後から現れてヘッダーがガタついていた
@@ -320,7 +321,7 @@ export const getCurrentUser = cache(async (): Promise<User | null> => {
 
 - Sanctum は `Referer` / `Origin` が `SANCTUM_STATEFUL_DOMAINS` に含まれるときだけ Cookie セッションを見るので、`Referer` を付ける
 - `cache()` で1リクエスト内の重複呼び出しをまとめる
-- 保護されたページでは、取れたユーザーを `UserProvider` で `useUser()` の `initialData` にする。ヘッダーもこのページではスケルトンを出さずに済む
+- 保護されたページでは、取れたユーザーを `UserProvider` で `useCurrentUser()` の `initialData` にする。ヘッダーもこのページではスケルトンを出さずに済む
 - **レイアウトでの判定は画面の出し分けのためで、守りではない**。守りは API 側の `auth:sanctum` と `can:admin`。レイアウトはクライアント側の画面遷移では再実行されないことがあるので、これに頼らない
 
 ### セッション切れ

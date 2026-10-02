@@ -25,10 +25,16 @@ const schema = z.object({
    * （features/facility/server.ts の apiBaseUrl()。docs/05 の「ビルド時の API」）
    */
   BUILD_API_URL: z.url().optional(),
+  /**
+   * 作り直しの受け口（POST /internal/revalidate）の合言葉。バックエンドの FRONTEND_REVALIDATE_SECRET と同じ値。
+   * 未設定のときは、受け口がすべての呼び出しを 401 で断る（合言葉なしで作り直させない）
+   */
+  REVALIDATE_SECRET: z.string().min(1).optional(),
 });
 
 export const env = schema.parse({
   API_URL: process.env.API_URL,
   FRONTEND_URL: process.env.FRONTEND_URL,
   BUILD_API_URL: process.env.BUILD_API_URL,
+  REVALIDATE_SECRET: process.env.REVALIDATE_SECRET,
 });

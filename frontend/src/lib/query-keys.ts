@@ -33,5 +33,7 @@ export const queryKeys = {
       all: ["admin", "calendar"] as const,
       week: (weekStart: string) => ["admin", "calendar", weekStart] as const,
     },
+    /** 今日以降の臨時休業日の一覧（GET /api/admin/holidays） */
+    holidays: ["admin", "holidays"] as const,
   },
 };

@@ -3,13 +3,14 @@ import { AdminCalendar } from "@/features/admin/calendar/components/AdminCalenda
 import { HolidayManager } from "@/features/admin/holidays/components/HolidayManager";
 import { PriceForm } from "@/features/admin/settings/components/PriceForm";
 import { RegularHolidayForm } from "@/features/admin/settings/components/RegularHolidayForm";
+import { UserSearch } from "@/features/admin/users/components/UserSearch";
+import { ProfileForm } from "@/features/auth/components/ProfileForm";
 
 /*
  * 管理画面（/admin。docs/08 の 6）。R1 と同じく1ページ構成。
  * 管理者かどうかは admin/layout.tsx がサーバーで判定済み。
  *
  * カレンダーを上に常に出し、設定は下のアコーディオン（開いたときに初めて中身を読み込む）に並べる。
- * ユーザー検索・プロフィールの設定は、7-9 でここに足す。
  */
 export default function AdminPage() {
   return (
@@ -26,6 +27,13 @@ export default function AdminPage() {
         </Accordion>
         <Accordion title="臨時休業日">
           <HolidayManager />
+        </Accordion>
+        <Accordion title="ユーザー検索">
+          <UserSearch />
+        </Accordion>
+        {/* マイページと同じフォーム（docs/08 の 5.4） */}
+        <Accordion title="プロフィール設定">
+          <ProfileForm />
         </Accordion>
       </div>
     </div>

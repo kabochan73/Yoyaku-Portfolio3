@@ -35,5 +35,7 @@ export const queryKeys = {
     },
     /** 今日以降の臨時休業日の一覧（GET /api/admin/holidays） */
     holidays: ["admin", "holidays"] as const,
+    /** 会員検索の結果（GET /api/admin/users?search=）。検索語ごと */
+    users: (search: string) => ["admin", "users", search] as const,
   },
 };

@@ -8,7 +8,7 @@
  *   R1 は new Date() をそのまま使っていたので、海外や時刻設定のずれた端末では
  *   週の表示や「今日」の印がずれる作りだった（フロント版の B1）。
  *
- * 表示用の書式（2026年10月6日（火） など）は lib/format.ts に分ける（手順5以降）。
+ * 表示用の書式（2026年10月6日（火） など）は lib/format.ts に分ける。
  */
 
 /**
@@ -35,4 +35,51 @@ const tokyoDateFormat = new Intl.DateTimeFormat("sv-SE", {
  */
 export function todayInTokyo(now: Date = new Date()): string {
   return tokyoDateFormat.format(now);
+}
+
+/**
+ * "YYYY-MM-DD" を、その日の UTC 0時の Date にする（このファイルの中だけで使う）。
+ *
+ * 日付の足し引きを UTC で行うのは、端末のタイムゾーンや夏時間に左右されないため。
+ * 例: 夏時間のある地域では、端末の時刻で「1日 = 24時間」を足すと、切り替わりの日に日付がずれることがある。
+ * UTC には夏時間が無いので、日付だけを正しく進められる。
+ */
+function parseDate(date: string): Date {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(Date.UTC(year ?? 0, (month ?? 1) - 1, day ?? 1));
+}
+
+/** parseDate で作った Date を "YYYY-MM-DD" に戻す（このファイルの中だけで使う） */
+function toDateString(date: Date): string {
+  // toISOString() は UTC で "2026-10-06T00:00:00.000Z" の形。先頭の10文字が日付
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * 日付に日数を足す（マイナスなら引く）。月末・年末も正しくまたぐ。
+ *
+ * @example
+ * addDays("2026-10-06", 7);  // → "2026-10-13"
+ * addDays("2026-10-31", 1);  // → "2026-11-01"
+ * addDays("2026-10-05", -1); // → "2026-10-04"
+ */
+export function addDays(date: string, days: number): string {
+  const result = parseDate(date);
+  result.setUTCDate(result.getUTCDate() + days);
+  return toDateString(result);
+}
+
+/**
+ * その日を含む週の月曜日。カレンダーは月曜始まり（月〜日）で1週間を表示する。
+ * 日曜日は、その前の月曜日（6日前）の週に入る。
+ *
+ * @example
+ * mondayOf("2026-10-08"); // 木曜 → "2026-10-05"
+ * mondayOf("2026-10-05"); // 月曜 → "2026-10-05"（そのまま）
+ * mondayOf("2026-10-11"); // 日曜 → "2026-10-05"
+ */
+export function mondayOf(date: string): string {
+  // getUTCDay(): 0 = 日曜, 1 = 月曜 … 6 = 土曜。月曜から何日たっているか（月曜 0 … 日曜 6）に直す
+  const daysSinceMonday = (parseDate(date).getUTCDay() + 6) % 7;
+  return addDays(date, -daysSinceMonday);
 }

@@ -15,6 +15,8 @@ import nextJest from "next/jest.js";
 process.env.API_URL ??= "http://api.test/api";
 // サーバーから API を呼ぶときの Referer（src/lib/env.ts）。テストでは届いたかを確かめるだけ
 process.env.FRONTEND_URL ??= "http://frontend.test";
+// ビルドの中で施設情報を取りに行く先（src/features/facility/server.ts）。テストでは呼び先の切り替えを確かめるだけ
+process.env.BUILD_API_URL ??= "http://build.test/api";
 
 /*
  * テストは「日本以外の時刻設定の端末」で動かす。

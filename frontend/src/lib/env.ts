@@ -18,9 +18,17 @@ const schema = z.object({
   API_URL: z.url(),
   /** このフロントの URL。サーバーから API を呼ぶときの Referer に使う（lib/server-fetch.ts）。例: http://localhost:3000 */
   FRONTEND_URL: z.url(),
+  /**
+   * ビルド（next build）の中で施設情報を取りに行く API の場所。例: http://localhost:8000/api
+   * ビルドする環境から「届く」URL にする（本番はバックエンドの公開 URL、CI はスタブサーバー）。
+   * 動いている間は使わないので、ここでは省略可にし、ビルドのときだけ必須にする
+   * （features/facility/server.ts の apiBaseUrl()。docs/05 の「ビルド時の API」）
+   */
+  BUILD_API_URL: z.url().optional(),
 });
 
 export const env = schema.parse({
   API_URL: process.env.API_URL,
   FRONTEND_URL: process.env.FRONTEND_URL,
+  BUILD_API_URL: process.env.BUILD_API_URL,
 });

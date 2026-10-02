@@ -224,7 +224,7 @@ R1 はマイページ・管理画面・ログイン画面のページ全体と `
 | `Footer` | SC | 施設情報を表示するだけ |
 | `app/(auth)/layout.tsx`, `mypage/layout.tsx`, `admin/layout.tsx` | SC | `getCurrentUser()` で判定して `redirect()` |
 | `UserProvider` | CC | サーバーで取ったユーザーを `useCurrentUser()` の初期値にする |
-| `app/error.tsx`, `app/global-error.tsx` | CC | Next.js の決まりで CC（`reset()` を受け取る） |
+| `app/error.tsx`, `app/global-error.tsx` | CC | Next.js の決まりで CC（`retry()` を受け取る。Next.js 16） |
 | `app/not-found.tsx` | SC | |
 
 #### トップ（`/`）

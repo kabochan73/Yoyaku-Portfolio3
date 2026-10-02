@@ -357,5 +357,6 @@ R1 は未設定。
 | 何も付けずに送った | 無し |
 
 - 本番では、ブラウザと Next.js の間にある Railway の入口のプロキシが `X-Forwarded-For` に利用者の IP を付ける見込みなので、`proxy.ts` は作らない。**デプロイ時に、Laravel から見た `$request->ip()` が利用者の IP になっているかを確かめる**（[07 の手動確認](07-dev-and-deploy.md#リリース前の手動確認)）。付いていなければ、そのとき `proxy.ts` で付ける
+- Server Component からバックエンドを呼ぶとき（`lib/server-fetch.ts`）は、Next.js に届いた `X-Forwarded-For` を引き継いで送る。付けないと、未ログインの人の回数制限が「Next.js サーバーの IP」1つにまとめられ、全員で分け合うことになる
 - ローカルでは全員が同じ IP（Next.js のコンテナ）に見える。開発中は問題ない
 - 確かめるために、`GET /api/debug/ip`（`APP_ENV` が `local` か、確認用の環境変数が立っているときだけ有効）で `$request->ip()` を返す口を手順4で作る

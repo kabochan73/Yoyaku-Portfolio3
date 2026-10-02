@@ -87,6 +87,9 @@ services:
       # Next.js サーバーから見た API の場所（Docker 内のネットワーク名で指定）。
       # 1-5 で rewrites（ブラウザの /api を backend へ中継）に使う。
       API_URL: http://nginx/api
+      # このフロントの URL。サーバーから API を呼ぶときの Referer に使う（frontend/src/lib/server-fetch.ts）。
+      # Sanctum は Referer が SANCTUM_STATEFUL_DOMAINS（開発では localhost:3000 を含む）のときだけ Cookie のセッションを見る
+      FRONTEND_URL: http://localhost:3000
     depends_on:
       - nginx
 

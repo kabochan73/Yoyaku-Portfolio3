@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Admin;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\SessionController;
 use App\Http\Controllers\CalendarController;
@@ -75,6 +76,22 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // 自分の予約をキャンセルする（行は消さず、状態を変える）
     Route::post('/reservations/{reservation}/cancel', [ReservationController::class, 'cancel']);
+});
+
+/*
+|--------------------------------------------------------------------------
+| 管理者だけが使える API（URL は /api/admin/...）
+|--------------------------------------------------------------------------
+|
+| auth:sanctum … 未ログインなら 401
+| can:admin    … 管理者でなければ 403（AppServiceProvider の Gate::define('admin')。docs/04 の「認可」）
+|
+*/
+Route::prefix('admin')->middleware(['auth:sanctum', 'can:admin'])->group(function () {
+    // 管理者用のカレンダー（予約の詳細つき）。回数制限と ETag は公開用の /calendar と同じ
+    Route::get('/calendar', Admin\CalendarController::class)
+        ->withoutMiddleware('throttle:api')
+        ->middleware(['throttle:calendar', 'cache.headers:private;no_cache;etag']);
 });
 
 /*

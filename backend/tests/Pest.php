@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /*
@@ -111,4 +112,18 @@ function fromFrontend(): TestCase
 function nextRequest(): void
 {
     app('auth')->forgetGuards();
+}
+
+/**
+ * $callback の中で、DB に何回問い合わせたかを数える。
+ * キャッシュが効いて DB を読んでいないこと（docs/04 の「キャッシュ方針」）などを確かめるのに使う。
+ */
+function countQueries(callable $callback): int
+{
+    DB::flushQueryLog();
+    DB::enableQueryLog();
+    $callback();
+    DB::disableQueryLog();
+
+    return count(DB::getQueryLog());
 }

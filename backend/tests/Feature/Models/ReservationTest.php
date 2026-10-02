@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
+use App\Enums\ReservationPhase;
 use App\Enums\ReservationStatus;
 use App\Models\Reservation;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 
 /*
- * Reservation モデルのテスト: 絞り込み（スコープ）・古い予約の削除・Factory。
+ * Reservation モデルのテスト: 絞り込み（スコープ）・段階（phase）とキャンセルできるか・古い予約の削除・Factory。
  *
  * 「今日」に依存するので、時刻を固定してから確かめる（docs/06 の方針）。
  * 2026-10-06（火）の 15:00 を「今」とする。
@@ -126,5 +127,39 @@ describe('Factory', function () {
     it('User の admin() は管理者を作る', function () {
         expect(User::factory()->admin()->create()->isAdmin())->toBeTrue()
             ->and(User::factory()->create()->isAdmin())->toBeFalse();
+    });
+});
+
+describe('phase()・isCancellable()（6-1）', function () {
+    /** 12〜14時の予約を、$time の時点で見たときの段階 */
+    function phaseAt(string $time, ?Reservation $reservation = null): ReservationPhase
+    {
+        $reservation ??= Reservation::factory()->phone()->on('2026-10-06', 12, 14)->make();
+
+        return $reservation->phase(CarbonImmutable::parse("2026-10-06 {$time}", 'Asia/Tokyo'));
+    }
+
+    it('開始前 → 利用中 → 終了。開始時刻ちょうどは利用中、終了時刻ちょうどは終了', function () {
+        expect(phaseAt('11:59'))->toBe(ReservationPhase::BeforeStart)
+            ->and(phaseAt('12:00'))->toBe(ReservationPhase::InUse)
+            ->and(phaseAt('13:59'))->toBe(ReservationPhase::InUse)
+            ->and(phaseAt('14:00'))->toBe(ReservationPhase::Finished);
+    });
+
+    it('前の日・次の日の予約も、日付まで含めて比べる', function () {
+        $tomorrow = Reservation::factory()->phone()->on('2026-10-07', 10, 12)->make();
+        $yesterday = Reservation::factory()->phone()->on('2026-10-05', 20, 22)->make();
+
+        expect(phaseAt('23:00', $tomorrow))->toBe(ReservationPhase::BeforeStart)
+            ->and(phaseAt('09:00', $yesterday))->toBe(ReservationPhase::Finished);
+    });
+
+    it('キャンセルできるのは、確定済みかつ開始前だけ（C2・B4）', function () {
+        $reservation = Reservation::factory()->phone()->on('2026-10-06', 12, 14)->make();
+        $cancelled = Reservation::factory()->phone()->on('2026-10-06', 18, 20)->cancelled()->make();
+
+        expect($reservation->isCancellable(CarbonImmutable::parse('2026-10-06 11:59', 'Asia/Tokyo')))->toBeTrue()
+            ->and($reservation->isCancellable(CarbonImmutable::parse('2026-10-06 12:00', 'Asia/Tokyo')))->toBeFalse()
+            ->and($cancelled->isCancellable(CarbonImmutable::parse('2026-10-06 11:00', 'Asia/Tokyo')))->toBeFalse();
     });
 });

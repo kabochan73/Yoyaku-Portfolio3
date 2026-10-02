@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Booking\TimeSlot;
+use App\Enums\ReservationPhase;
 use App\Enums\ReservationStatus;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Database\Factories\ReservationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -22,7 +25,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * - キャンセルしても行は消さず、status を Cancelled にして cancelled_at を入れる
  * - 予約者名（booker_name）と金額（price）は予約時点の値。後で会員の名前や料金が変わっても変えない
  *
- * 予約の振る舞い（timeSlot()・isCancellable()・cancel()）は、使う部品ができる手順で足す（3-4・手順6）。
+ * 予約の振る舞い: timeSlot()・phase()・isCancellable()（6-1）。キャンセルの cancel() は 6-3 で足す。
  *
  * 【古い予約の自動削除】
  * 予約日が「管理画面で遡れる範囲（3か月）」より前の予約は、毎日まとめて削除する（docs/01 の「データ保持」）。
@@ -86,6 +89,48 @@ final class Reservation extends Model
         $months = (int) config('facility.rules.admin_lookback_months');
 
         return self::query()->where('date', '<', today()->subMonthsNoOverflow($months)->toDateString());
+    }
+
+    /**
+     * 予約の時間帯（日付 + 開始の時 + 終了の時）。料金の計算や、日時の比較に使う。
+     */
+    public function timeSlot(): TimeSlot
+    {
+        return new TimeSlot($this->date, $this->start_hour, $this->end_hour);
+    }
+
+    /**
+     * 今の時刻から見た段階（開始前 / 利用中 / 終了）。
+     *
+     * 例: 12〜14時の予約
+     * - 11:59 → BeforeStart
+     * - 12:00 → InUse（開始時刻ちょうどは「始まっている」。予約時の判定 B10 と同じ境目）
+     * - 14:00 → Finished
+     *
+     * 「今」は引数で受け取る（BookingRules と同じ。テストで時刻を自由に与えられる）。
+     */
+    public function phase(CarbonImmutable $now): ReservationPhase
+    {
+        $slot = $this->timeSlot();
+
+        if ($now->lt($slot->startsAt())) {
+            return ReservationPhase::BeforeStart;
+        }
+
+        return $now->lt($slot->endsAt()) ? ReservationPhase::InUse : ReservationPhase::Finished;
+    }
+
+    /**
+     * キャンセルできるか: 確定済み かつ 開始前（docs/01 の C2）。
+     *
+     * 【B4】R1 はキャンセル済み・終わった予約でも、API からキャンセルできた（状態を上書きしてメールも送っていた）。
+     * マイページの「キャンセル」ボタンを出すか（ReservationResource の is_cancellable）と、
+     * キャンセルの処理（6-3 の CancelReservation）の両方で、この同じ判定を使う。
+     */
+    public function isCancellable(CarbonImmutable $now): bool
+    {
+        return $this->status === ReservationStatus::Confirmed
+            && $this->phase($now) === ReservationPhase::BeforeStart;
     }
 
     /**

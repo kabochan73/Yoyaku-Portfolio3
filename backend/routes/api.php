@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\SessionController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\FacilityController;
+use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -65,6 +66,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // ログイン中のユーザー自身
     Route::get('/user', [UserController::class, 'show']);
     Route::put('/user/profile', [UserController::class, 'updateProfile']);
+
+    // 自分の予約（マイページ）
+    Route::get('/user/reservations', [ReservationController::class, 'index']);
 });
 
 /*

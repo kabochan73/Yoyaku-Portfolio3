@@ -58,6 +58,12 @@ final readonly class TimeSlot
         return $this->date->setTime($this->startHour, 0);
     }
 
+    /** 終了の日時。例: 10〜12時なら 2026-10-06 12:00 */
+    public function endsAt(): CarbonImmutable
+    {
+        return $this->date->setTime($this->endHour, 0);
+    }
+
     /** 土日か。料金（平日・土日）を決めるのに使う。祝日は判定しない（平日料金。docs/01） */
     public function isWeekend(): bool
     {
